@@ -148,6 +148,11 @@ function App() {
                 token,
                 prompt: prompt.trim()
             })
+
+            // Save to prompt history for offline viewing
+            const currentHistory = StatusPersistence.getPromptHistory()
+            StatusPersistence.savePromptHistory([prompt.trim(), ...currentHistory])
+
             return Promise.resolve()
         } catch (error) {
             const friendlyError = getErrorMessage(error, 'prompt')

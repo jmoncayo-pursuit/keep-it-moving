@@ -21,10 +21,21 @@ function ConnectionHealth({ connectionState, isConnected, reconnectAttempts = 0,
 
         if (connectionState === 'connecting') {
             if (reconnectAttempts > 0) {
+                const funnyReconnectMessages = [
+                    'Knocking on the server door... 🚪',
+                    'Sending digital carrier pigeons... 🐦',
+                    'Asking nicely for connection... 🙏',
+                    'Bribing the router with cookies... 🍪',
+                    'Doing the connection dance... 💃'
+                ];
+                const message = reconnectAttempts <= 3
+                    ? `Reconnecting... (${reconnectAttempts}/${maxAttempts})`
+                    : funnyReconnectMessages[Math.min(reconnectAttempts - 4, funnyReconnectMessages.length - 1)];
+
                 return {
                     status: 'reconnecting',
                     emoji: '🔄',
-                    message: `Reconnecting... (${reconnectAttempts}/${maxAttempts})`,
+                    message,
                     color: 'text-kim-yellow'
                 }
             }
@@ -40,7 +51,7 @@ function ConnectionHealth({ connectionState, isConnected, reconnectAttempts = 0,
             return {
                 status: 'failed',
                 emoji: '❌',
-                message: 'Connection failed',
+                message: 'Connection took a permanent vacation 🏖️',
                 color: 'text-kim-red'
             }
         }

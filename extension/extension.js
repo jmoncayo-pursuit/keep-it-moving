@@ -149,9 +149,13 @@ function activate(context) {
                 return;
             }
 
-            // Prepare the message with optional quip (commented out to avoid Copilot confusion)
-            // const message = quip ? `${prompt}\n\n💭 ${quip}` : prompt;
+            // Prepare the message (keep quips separate for user feedback only)
             const message = prompt;
+
+            // Show the quip to the user as a fun notification, not to Copilot
+            if (quip) {
+                vscode.window.showInformationMessage(`📱 ${quip}`, { modal: false });
+            }
 
             console.log('😺 Sending prompt to Copilot Chat:', prompt);
 

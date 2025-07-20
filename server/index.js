@@ -100,7 +100,13 @@ class KIMRelayServer {
                         console.log(`⚠️ Port ${this.port + attempts - 1} in use, trying next...`);
                     }
                     if (attempts >= maxAttempts) {
-                        throw new Error(`All ports from ${this.port} to ${this.port + maxAttempts - 1} are in use`);
+                        const funnyErrors = [
+                            "All the good ports are having a party without us! 🎉",
+                            "Ports are playing hide and seek! 🙈",
+                            "Time to find a new neighborhood for our server! 🏠"
+                        ];
+                        const randomError = funnyErrors[Math.floor(Math.random() * funnyErrors.length)];
+                        throw new Error(`${randomError} (Ports ${this.port}-${this.port + maxAttempts - 1} are busy)`);
                     }
                 } else {
                     throw error;

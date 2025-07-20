@@ -42,3 +42,6 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+
+# Private development files
+.kiro/private/
