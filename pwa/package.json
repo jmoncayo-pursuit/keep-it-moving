@@ -1,0 +1,38 @@
+{
+    "name": "kim-pwa",
+    "version": "1.0.0",
+    "description": "Keep-It-Moving PWA - Send prompts to VS Code Copilot from any device",
+    "private": true,
+    "dependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.8.0",
+        "react-qr-code": "^2.0.11",
+        "tailwindcss": "^3.2.4",
+        "twemoji": "^14.0.2",
+        "ws": "^8.14.2"
+    },
+    "devDependencies": {
+        "@types/react": "^18.0.27",
+        "@types/react-dom": "^18.0.10",
+        "@vitejs/plugin-react": "^3.1.0",
+        "autoprefixer": "^10.4.13",
+        "postcss": "^8.4.21",
+        "vite": "^4.1.0",
+        "vite-plugin-pwa": "^0.14.4"
+    },
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "test": "echo \"PWA tests coming soon! 🧪\""
+    },
+    "keywords": [
+        "pwa",
+        "react",
+        "copilot",
+        "hackathon",
+        "ForTheLoveOfCode"
+    ],
+    "license": "MIT"
+}

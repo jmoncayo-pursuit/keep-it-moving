@@ -1,0 +1,39 @@
+{
+    "name": "kim-cli",
+    "version": "1.0.0",
+    "description": "Keep-It-Moving CLI - Command-line interface for KIM server management",
+    "main": "kim.js",
+    "bin": {
+        "kim": "./kim.js"
+    },
+    "scripts": {
+        "test": "jest",
+        "build": "pkg kim.js --targets node16-macos-x64,node16-win-x64,node16-linux-x64 --output ../dist/kim"
+    },
+    "keywords": [
+        "kim",
+        "copilot",
+        "vscode",
+        "cli",
+        "relay",
+        "prompt"
+    ],
+    "author": "KIM Team",
+    "license": "MIT",
+    "dependencies": {
+        "commander": "^9.4.1",
+        "ws": "^8.18.3"
+    },
+    "devDependencies": {
+        "jest": "^29.7.0",
+        "pkg": "^5.8.1"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "os": [
+        "darwin",
+        "linux",
+        "win32"
+    ]
+}

@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "name": "KIM Security & Token Validator",
+  "description": "Validates UUID token authentication patterns and ensures no internet dependencies leak into the codebase",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.{js",
+      "ts",
+      "jsx",
+      "tsx",
+      "json}"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review this code for KIM security standards: validate UUID token authentication patterns, ensure no internet/cloud dependencies, check for proper local network restrictions, verify WebSocket security implementations, and confirm all external requests are blocked. Flag any potential security vulnerabilities in local-first architecture."
+  }
+}

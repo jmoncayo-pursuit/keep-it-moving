@@ -1,0 +1,62 @@
+{
+    "name": "keep-it-moving",
+    "version": "1.0.0",
+    "description": "Keep-It-Moving (KIM) - Relay prompts from any device to VS Code Copilot 🚀",
+    "main": "cli/kim.js",
+    "bin": {
+        "kim": "./cli/kim.js"
+    },
+    "scripts": {
+        "start": "node cli/kim.js start",
+        "dev": "node cli/kim.js dev",
+        "test": "node test-runner.js",
+        "test:performance": "node test-runner.js --performance",
+        "build": "node scripts/build.js",
+        "setup": "node cli/kim.js setup",
+        "doctor": "node cli/kim.js doctor",
+        "clean": "rm -rf dist/ && rm -rf */node_modules/",
+        "install-all": "npm install && cd server && npm install && cd ../pwa && npm install && cd ../extension && npm install && cd ../cli && npm install"
+    },
+    "keywords": [
+        "kim",
+        "keep-it-moving",
+        "copilot",
+        "vscode",
+        "prompt",
+        "relay",
+        "websocket",
+        "pwa",
+        "hackathon",
+        "for-the-love-of-code"
+    ],
+    "author": "KIM Team",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/your-username/keep-it-moving.git"
+    },
+    "bugs": {
+        "url": "https://github.com/your-username/keep-it-moving/issues"
+    },
+    "homepage": "https://github.com/your-username/keep-it-moving#readme",
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "os": [
+        "darwin",
+        "linux",
+        "win32"
+    ],
+    "workspaces": [
+        "server",
+        "pwa",
+        "extension",
+        "cli"
+    ],
+    "devDependencies": {
+        "concurrently": "^7.6.0"
+    },
+    "dependencies": {
+        "commander": "^9.4.1"
+    }
+}

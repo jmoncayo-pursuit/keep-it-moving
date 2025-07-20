@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom animations and styles for KIM */
+@layer components {
+    .kim-button {
+        @apply bg-kim-blue hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95;
+    }
+
+    .kim-input {
+        @apply bg-gray-800 border border-gray-600 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-kim-blue focus:border-transparent;
+    }
+
+    .kim-card {
+        @apply bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700;
+    }
+
+    .emoji-bounce {
+        animation: bounce 2s infinite;
+    }
+
+    .emoji-pulse {
+        animation: pulse 2s infinite;
+    }
+}
+
+/* Emoji font fallback */
+.emoji {
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #374151;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #6b7280;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}

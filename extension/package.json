@@ -1,0 +1,97 @@
+{
+    "name": "kim-vscode-extension",
+    "displayName": "Keep-It-Moving (KIM)",
+    "description": "Relay prompts from devices to GitHub Copilot chat with joyful emoji feedback",
+    "version": "1.0.0",
+    "publisher": "kim-team",
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "enabledApiProposals": [
+        "chatVariableResolver"
+    ],
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "copilot",
+        "remote",
+        "prompts",
+        "hackathon",
+        "ForTheLoveOfCode"
+    ],
+    "activationEvents": [
+        "onStartupFinished",
+        "onCommand:kim.injectPrompt",
+        "onCommand:kim.connectToServer"
+    ],
+    "main": "./extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "kim.showPairingCode",
+                "title": "Show Pairing Code",
+                "category": "KIM"
+            },
+            {
+                "command": "kim.toggleServer",
+                "title": "Toggle Relay Server",
+                "category": "KIM"
+            },
+            {
+                "command": "kim.showStatus",
+                "title": "Show Status",
+                "category": "KIM"
+            },
+            {
+                "command": "kim.connectToServer",
+                "title": "Connect to Server",
+                "category": "KIM"
+            },
+            {
+                "command": "kim.injectPrompt",
+                "title": "Send Prompt to Copilot Chat",
+                "category": "KIM"
+            }
+        ],
+        "configuration": {
+            "title": "Keep-It-Moving",
+            "properties": {
+                "kim.serverPort": {
+                    "type": "number",
+                    "default": 8080,
+                    "description": "Port for the local relay server"
+                },
+                "kim.enableQuips": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable vibe check mode with fun quips"
+                },
+                "kim.autoStartServer": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Automatically start the relay server when VS Code opens"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "test": "node ./test/runTest.js",
+        "package": "vsce package"
+    },
+    "dependencies": {
+        "ws": "^8.14.2"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.85.0",
+        "@vscode/test-electron": "^2.3.8",
+        "vsce": "^2.15.0",
+        "mocha": "^10.2.0",
+        "glob": "^10.3.10"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/kim-team/keep-it-moving"
+    },
+    "license": "MIT"
+}

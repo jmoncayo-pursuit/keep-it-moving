@@ -1,0 +1,31 @@
+{
+    "name": "kim-relay-server",
+    "version": "1.0.0",
+    "description": "Keep-It-Moving local relay server for VS Code Copilot prompts",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "node --watch index.js",
+        "test": "NODE_ENV=test jest"
+    },
+    "keywords": [
+        "hackathon",
+        "copilot",
+        "websocket",
+        "local-first",
+        "ForTheLoveOfCode"
+    ],
+    "author": "KIM Team",
+    "license": "MIT",
+    "dependencies": {
+        "ws": "^8.14.2",
+        "uuid": "^9.0.1"
+    },
+    "devDependencies": {
+        "jest": "^29.7.0",
+        "nodemon": "^3.0.2"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    }
+}

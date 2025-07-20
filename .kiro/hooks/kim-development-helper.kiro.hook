@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "KIM Development Helper",
+  "description": "Provides helpful suggestions and guidance for KIM project development without being overly restrictive",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/server/*.js",
+      "**/src/**/*.{jsx",
+      "tsx}",
+      "**/extension/*.js"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Help improve this KIM project code with friendly suggestions. Consider these KIM principles: local-first architecture (no internet dependencies), playful UX with emoji feedback, WebSocket communication, and cross-platform compatibility. Provide constructive suggestions for improvement, highlight good patterns, and suggest fun UX enhancements where appropriate. Keep feedback encouraging and development-friendly."
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "name": "KIM Hackathon Demo Optimizer",
+  "description": "Ensures code changes enhance demo appeal and hackathon presentation value",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.{js",
+      "ts",
+      "jsx",
+      "tsx",
+      "md}"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review this code for KIM hackathon demo appeal: ensure \"wow factor\" elements are present, validate animated QR codes and visual feedback work smoothly, check for #ForTheLoveOfCode integration opportunities, verify GIF-worthy moments in UX flow, and suggest improvements for demo presentation. Focus on making the code more impressive and engaging for hackathon judges while maintaining technical excellence."
+  }
+}
