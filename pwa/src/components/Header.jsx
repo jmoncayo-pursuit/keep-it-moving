@@ -26,7 +26,7 @@ function Header({ isConnected, isPaired, deviceType, onDisconnect, connectionSta
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                         <h1 className="text-2xl font-bold text-white">
-                            <span className="emoji">🚀</span> KIM
+                            <span className="emoji">🚀</span> Keep-It-Moving
                         </h1>
                         <div className="flex items-center space-x-2 text-sm text-gray-300">
                             <span className="emoji">{getDeviceEmoji()}</span>

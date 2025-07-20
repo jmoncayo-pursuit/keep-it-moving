@@ -25,8 +25,8 @@ export function useWebSocket({
         setConnectionState('connecting')
 
         try {
-            // Try to connect to local server (default port 8080)
-            const serverUrl = 'ws://localhost:8080'
+            // Try to connect to server (use environment variable or default to localhost)
+            const serverUrl = import.meta.env.VITE_KIM_SERVER_URL || 'ws://localhost:8080'
             wsRef.current = new WebSocket(serverUrl)
 
             wsRef.current.onopen = () => {

@@ -3,7 +3,7 @@
     "displayName": "Keep-It-Moving (KIM)",
     "description": "Relay prompts from devices to GitHub Copilot chat with joyful emoji feedback",
     "version": "1.0.0",
-    "publisher": "kim-team",
+    "publisher": "jmoncayo-pursuit",
     "engines": {
         "vscode": "^1.85.0"
     },
@@ -91,7 +91,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/kim-team/keep-it-moving"
+        "url": "https://github.com/jmoncayo-pursuit/keep-it-moving"
     },
     "license": "MIT"
 }

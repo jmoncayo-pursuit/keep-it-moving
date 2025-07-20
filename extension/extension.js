@@ -149,8 +149,9 @@ function activate(context) {
                 return;
             }
 
-            // Prepare the message with optional quip
-            const message = quip ? `${prompt}\n\n💭 ${quip}` : prompt;
+            // Prepare the message with optional quip (commented out to avoid Copilot confusion)
+            // const message = quip ? `${prompt}\n\n💭 ${quip}` : prompt;
+            const message = prompt;
 
             console.log('😺 Sending prompt to Copilot Chat:', prompt);
 

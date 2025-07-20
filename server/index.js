@@ -36,7 +36,7 @@ class KIMRelayServer {
                 return new Promise((resolve, reject) => {
                     const server = new WebSocket.Server({
                         port: testPort,
-                        host: 'localhost' // Local-first: bind only to localhost
+                        host: process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost'
                     });
 
                     server.on('listening', () => {
@@ -87,7 +87,7 @@ class KIMRelayServer {
 
                 this.wss = new WebSocket.Server({
                     port: testPort,
-                    host: 'localhost' // Ensure local network only
+                    host: process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost'
                 });
 
                 this.port = testPort;

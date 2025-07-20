@@ -1,12 +1,12 @@
 # Keep-It-Moving (KIM) 🚀
 
-> **#ForTheLoveOfCode 2025** - Relay prompts from any device to VS Code Copilot with joyful, local-first magic! ✨
+> Relay prompts from any device to VS Code Copilot with joyful, local-first magic! ✨
 
 ![KIM Demo](docs/demo.gif)
 
-## What is KIM? 🤔
+## What is Keep-It-Moving? 🤔
 
-Keep-It-Moving (KIM) is a hackathon project that lets you send prompts to GitHub Copilot from **any device** - your phone, tablet, or laptop - all while keeping everything local and secure. No cloud dependencies, just pure local network magic! 🎩✨
+Keep-It-Moving (KIM) lets you send prompts to GitHub Copilot from **any device** - your phone, tablet, or laptop - all while keeping everything local and secure. No cloud dependencies, just pure local network magic! 🎩✨
 
 ### The Problem 😤
 
@@ -222,7 +222,7 @@ cd extension && npm test
 
 ## Contributing 🤝
 
-We love contributions! This is a hackathon project built with ❤️ for the developer community.
+Contributions are welcome! This project is built with ❤️ for the developer community.
 
 ### Quick Contribution Guide
 
@@ -239,18 +239,18 @@ We love contributions! This is a hackathon project built with ❤️ for the dev
 - Add tests for new features
 - Follow the existing playful tone
 
-## Hackathon Story 📖
+## The Story 📖
 
-KIM was born from a simple frustration: "Why can't I send a Copilot prompt from my phone?" 
+Keep-It-Moving was born from a simple frustration: "Why can't I send a Copilot prompt from my phone?" 
 
-During "For the Love of Code 2025", we decided to solve this with a local-first approach that keeps everything secure and fast. The result is a joyful, emoji-filled experience that makes coding more collaborative and fun!
+The solution uses a local-first approach that keeps everything secure and fast. The result is a joyful, emoji-filled experience that makes coding more collaborative and fun!
 
-### What Makes KIM Special? ✨
+### What Makes Keep-It-Moving Special? ✨
 
 - **Local-First Philosophy**: No cloud, no tracking, just pure local magic
 - **Joyful UX**: Every interaction has personality and fun
-- **Developer-Focused**: Built by developers, for developers
-- **Hackathon Spirit**: Fast iteration, creative solutions, lots of emoji! 🚀
+- **Developer-Focused**: Built for developers who love efficient workflows
+- **Creative Solutions**: Fast iteration, innovative approach, lots of emoji! 🚀
 
 ## Roadmap 🗺️
 
@@ -277,7 +277,7 @@ MIT License - built with ❤️ for the developer community.
 
 **#ForTheLoveOfCode 2025** 🚀
 
-Made with ❤️ and lots of ☕ by the KIM Team
+Made with ❤️ and lots of ☕
 
 [Demo](https://kim-demo.example.com) • [Docs](https://kim-docs.example.com) • [Issues](https://github.com/your-username/keep-it-moving/issues)
 

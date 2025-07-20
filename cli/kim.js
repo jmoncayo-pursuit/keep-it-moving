@@ -152,36 +152,27 @@ program
 program
     .command('dev')
     .description('Start development environment 🛠️')
-    .option('--server-only', 'Start only the server')
-    .option('--pwa-only', 'Start only the PWA')
     .action((options) => {
         console.log(kimLogo);
         console.log('🛠️  Starting KIM development environment...\n');
+        console.log('🖥️  Server will start on port 8080');
+        console.log('📱 PWA will start on port 3001');
+        console.log('💡 Press Ctrl+C to stop both\n');
 
-        const processes = [];
-
-        if (!options.pwaOnly) {
-            console.log('🖥️  Starting server...');
-            const serverProcess = spawn('npm', ['run', 'dev'], {
-                cwd: path.join(__dirname, '..', 'server'),
-                stdio: 'inherit'
-            });
-            processes.push(serverProcess);
-        }
-
-        if (!options.serverOnly) {
-            console.log('📱 Starting PWA...');
-            const pwaProcess = spawn('npm', ['run', 'dev'], {
-                cwd: path.join(__dirname, '..', 'pwa'),
-                stdio: 'inherit'
-            });
-            processes.push(pwaProcess);
-        }
+        // Use concurrently to start both server and PWA
+        const concurrentlyPath = path.join(__dirname, '..', 'node_modules', '.bin', 'concurrently');
+        const devProcess = spawn('node', [concurrentlyPath,
+            '"npm run start --prefix server"',
+            '"npm run dev --prefix pwa"'
+        ], {
+            stdio: 'inherit',
+            shell: true
+        });
 
         // Handle cleanup
         process.on('SIGINT', () => {
             console.log('\n🛑 Stopping development environment...');
-            processes.forEach(p => p.kill());
+            devProcess.kill();
             process.exit(0);
         });
     });
