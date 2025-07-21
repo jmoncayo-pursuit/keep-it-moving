@@ -139,7 +139,7 @@ function activate(context) {
             });
     });
 
-    // Inject prompt into Copilot chat using the proper VS Code Chat API
+    // Inject prompt directly into Copilot chat
     let injectPrompt = vscode.commands.registerCommand('kim.injectPrompt', async function (prompt, quip) {
         try {
             // Check if Copilot is available
@@ -149,98 +149,24 @@ function activate(context) {
                 return;
             }
 
-            // Prepare the message (keep quips separate for user feedback only)
-            const message = prompt;
-
             // Show the quip to the user as a fun notification, not to Copilot
             if (quip) {
                 vscode.window.showInformationMessage(`📱 ${quip}`, { modal: false });
             }
 
-            console.log('😺 Sending prompt to Copilot Chat:', prompt);
+            console.log('😺 Injecting prompt into Copilot Chat:', prompt);
 
-            try {
-                // Show progress indicator
-                await vscode.window.withProgress({
-                    location: vscode.ProgressLocation.Notification,
-                    title: "🚀 Delivering prompt to Copilot...",
-                    cancellable: false
-                }, async (progress) => {
-                    progress.report({ increment: 25, message: "Opening chat..." });
+            // Direct injection using VS Code Chat API
+            await vscode.commands.executeCommand('workbench.action.chat.open', {
+                query: prompt
+            });
 
-                    // Method 1: Try the new chat API approach
-                    try {
-                        await vscode.commands.executeCommand('workbench.action.chat.open', {
-                            query: message
-                        });
-                        progress.report({ increment: 75, message: "Prompt delivered!" });
-                        return;
-                    } catch (chatApiError) {
-                        console.log('Chat API not available, trying alternative methods...');
-                    }
-
-                    progress.report({ increment: 25, message: "Trying alternative method..." });
-
-                    // Method 2: Try opening Copilot chat and copying to clipboard
-                    try {
-                        // Open Copilot chat panel
-                        await vscode.commands.executeCommand('github.copilot.openChat');
-                        await new Promise(resolve => setTimeout(resolve, 500));
-
-                        // Copy message to clipboard
-                        await vscode.env.clipboard.writeText(message);
-
-                        progress.report({ increment: 50, message: "Prompt copied to clipboard!" });
-
-                        vscode.window.showInformationMessage(
-                            `☕ Copilot chat opened! Prompt copied to clipboard - just paste it in! 📋`,
-                            'Got it!'
-                        );
-                        return;
-                    } catch (copilotError) {
-                        console.log('Copilot chat command not available, using fallback...');
-                    }
-
-                    progress.report({ increment: 25, message: "Using fallback method..." });
-
-                    // Method 3: Fallback - just copy to clipboard with instructions
-                    await vscode.env.clipboard.writeText(message);
-
-                    const shortcut = process.platform === 'darwin' ? 'Cmd+I' : 'Ctrl+I';
-                    vscode.window.showInformationMessage(
-                        `🎯 Prompt ready! Press ${shortcut} to open Copilot chat, then paste (${process.platform === 'darwin' ? 'Cmd+V' : 'Ctrl+V'}) 🚀`,
-                        'Open Chat for Me'
-                    ).then(selection => {
-                        if (selection === 'Open Chat for Me') {
-                            // Try to open any chat interface
-                            vscode.commands.executeCommand('workbench.action.chat.open').catch(() => {
-                                vscode.commands.executeCommand('github.copilot.openChat').catch(() => {
-                                    vscode.window.showInformationMessage(`Press ${shortcut} to open Copilot chat manually`);
-                                });
-                            });
-                        }
-                    });
-
-                    progress.report({ increment: 25, message: "Ready to paste!" });
-                });
-
-                vscode.window.showInformationMessage(`😺 Prompt processed: "${prompt.substring(0, 50)}..."`);
-                console.log('✅ Successfully processed prompt for Copilot Chat');
-
-            } catch (error) {
-                console.error('❌ Failed to process prompt:', error);
-
-                // Emergency fallback - just copy to clipboard
-                await vscode.env.clipboard.writeText(message);
-                const shortcut = process.platform === 'darwin' ? 'Cmd+I' : 'Ctrl+I';
-                vscode.window.showWarningMessage(
-                    `🌀 Something went sideways, but your prompt is copied! Press ${shortcut} for Copilot chat, then paste away! 🚀`
-                );
-            }
+            vscode.window.showInformationMessage(`✅ Prompt delivered: "${prompt.substring(0, 50)}..."`);
+            console.log('✅ Successfully injected prompt into Copilot Chat');
 
         } catch (error) {
             console.error('❌ Extension error:', error);
-            vscode.window.showErrorMessage('🌀 Prompt got lost in the code maze: ' + error.message);
+            vscode.window.showErrorMessage('🌀 Prompt injection failed: ' + error.message);
         }
     });
 
