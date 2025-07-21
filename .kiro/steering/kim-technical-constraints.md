@@ -1,16 +1,16 @@
 # KIM Technical Constraints
 
 ## Architecture Requirements
-- **Local Network Only**: All communication must stay on LAN, no internet dependencies
-- **WebSocket Communication**: Use ws library for real-time device-to-server communication
-- **VS Code Integration**: Must use vscode.postMessage API to inject prompts into Copilot chat panel
-- **Token Authentication**: UUID-based tokens for device pairing security
+- **Flexible Communication**: Support both local network and internet-based communication
+- **WebSocket Communication**: Use WebSocket for real-time communication (local or remote)
+- **VS Code Integration**: Use workbench.action.chat.open API for direct Copilot prompt injection
+- **Secure Authentication**: Token-based authentication for device pairing and communication
 
 ## Performance Targets
-- Setup time: < 2 minutes
-- Prompt relay success: 95% on LAN
-- Runtime size: < 20MB
-- Response time: < 2 seconds for prompt delivery
+- Setup time: Minimal setup complexity
+- Prompt relay: Reliable delivery across network types
+- Runtime size: Lightweight implementation
+- Response time: Fast prompt delivery
 
 ## Platform Support
 - **Operating Systems**: macOS, Windows, Linux
@@ -19,9 +19,9 @@
 - **Browsers**: Chrome, Firefox, Safari (PWA support)
 
 ## Dependencies
-- **Server**: ws (WebSocket), minimal additional packages
-- **PWA**: React, Tailwind CSS, react-qr-code, twemoji
-- **Extension**: VS Code API only, no external dependencies
+- **Server**: WebSocket library, authentication, minimal core packages
+- **PWA**: React, Tailwind CSS, QR code support, emoji support
+- **Extension**: VS Code API, WebSocket client for communication
 
 ## UX Requirements
 - Mobile-first responsive design
@@ -30,9 +30,33 @@
 - Toast notifications for feedback
 - Playful error messages and quips
 
-## Hackathon Considerations
-- Must include GIF demo for README
-- #ForTheLoveOfCode tag integration
-- Focus on demo appeal and "wow factor"
+## Development Principles
 - Open source with MIT license
-- Clear setup documentation
+- Simple setup and user experience
+- Cross-platform compatibility
+- Extensible architecture for future features
+- Privacy-conscious design choices
+
+## Future Architecture Considerations
+
+### Communication Models
+- **Current**: Local network WebSocket server in VS Code extension
+- **Future**: Cloud-hosted relay service for remote access
+- **Hybrid**: Support both local and cloud modes based on user preference
+
+### Deployment Options
+- **Local**: Extension starts local server (current implementation)
+- **Cloud**: Hosted PWA connects to cloud service that communicates with extension
+- **Hybrid**: Extension can connect to either local or remote relay servers
+
+### Security Models
+- **Local**: Direct device-to-extension communication
+- **Remote**: Encrypted communication through relay service
+- **Authentication**: Token-based pairing regardless of communication method
+
+### Use Cases Enabled by Cloud Architecture
+- Send prompts from anywhere in the world to your IDE
+- Multiple devices connected simultaneously
+- Persistent prompt history across devices
+- Team collaboration features
+- Mobile app integration

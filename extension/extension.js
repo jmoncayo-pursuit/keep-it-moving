@@ -145,7 +145,14 @@ function activate(context) {
             // Check if Copilot is available
             const copilotExtension = vscode.extensions.getExtension('GitHub.copilot');
             if (!copilotExtension) {
-                vscode.window.showErrorMessage('🍕 Copilot seems to be out for lunch!');
+                const copilotErrors = [
+                    '🍕 Copilot seems to be out for lunch!',
+                    '🤖 Copilot is taking a digital coffee break!',
+                    '🛸 Copilot has temporarily left the building!',
+                    '🎯 Copilot is playing hide and seek!'
+                ];
+                const randomError = copilotErrors[Math.floor(Math.random() * copilotErrors.length)];
+                vscode.window.showErrorMessage(randomError);
                 return;
             }
 
@@ -195,17 +202,30 @@ function activate(context) {
 }
 
 // WebSocket connection management
-function connectToServer() {
-    try {
-        console.log(`🔌 Attempting to connect to KIM server on ws://localhost:${serverPort}`);
-        vscode.window.showInformationMessage(`🔌 Attempting to connect to KIM server on port ${serverPort}...`);
+function connectToServer(retryPort = null) {
+    const targetPort = retryPort || serverPort;
 
-        wsConnection = new WebSocket(`ws://localhost:${serverPort}`);
+    try {
+        console.log(`🔌 Attempting to connect to KIM server on ws://localhost:${targetPort}`);
+        if (!retryPort) {
+            vscode.window.showInformationMessage(`🔌 Attempting to connect to KIM server on port ${targetPort}...`);
+        }
+
+        wsConnection = new WebSocket(`ws://localhost:${targetPort}`);
 
         wsConnection.on('open', () => {
             console.log('🔗 Connected to KIM server');
             updateStatusBar('🟢 Connected');
-            vscode.window.showInformationMessage('🔗 Connected to KIM server!');
+
+            const connectionQuips = [
+                '🎉 KIM is ready to relay your prompts!',
+                '⚡ Connection established - let the coding magic begin!',
+                '🚀 Houston, we have connection! Ready for prompt liftoff!',
+                '🎯 Locked and loaded - your coding sidekick is online!',
+                '✨ Connection sparkles activated - ready to code!'
+            ];
+            const randomQuip = connectionQuips[Math.floor(Math.random() * connectionQuips.length)];
+            vscode.window.showInformationMessage(randomQuip);
 
             // Register as VS Code extension
             const registrationMessage = {
@@ -215,9 +235,6 @@ function connectToServer() {
             };
             console.log('📤 Sending registration message:', JSON.stringify(registrationMessage));
             wsConnection.send(JSON.stringify(registrationMessage));
-
-            // Show a fun connection message
-            vscode.window.showInformationMessage('🎉 KIM is ready to relay your prompts!');
         });
 
         wsConnection.on('message', (data) => {
