@@ -7,6 +7,7 @@
 - All claims must be verified through actual usage, not theoretical implementation
 - Performance metrics require actual benchmarks, not estimates
 - Platform support requires testing on actual platforms
+- Mobile functionality must be tested on actual mobile devices before documenting
 
 ### Testing Requirements for Public Claims
 - **Functionality**: Feature must work end-to-end in development environment
@@ -29,8 +30,14 @@
 5. Only then publish or update public docs
 
 ### Private vs Public Documentation
-- **Private** (`.kiro/private/`): Plans, ideas, untested features, internal notes
+- **Private** (`.kiro/private/`): Plans, ideas, untested features, internal notes, task lists
 - **Public** (README, docs/): Only verified, working functionality
+
+### Task Management
+- Task lists and planning documents should be kept in `.kiro/private/`
+- Never mention private task lists in commit messages
+- Only commit code changes after functionality is verified to work
+- QR code and mobile functionality must be tested on actual devices before committing
 
 ## Commit Message Guidelines
 
@@ -50,3 +57,6 @@
 - Focus on what changed, not why it was wrong before
 - Use neutral, factual language
 - Describe the improvement, not the problem being fixed
+- Never reference private task lists or planning documents
+- Only commit after functionality is verified to work
+- For mobile/QR features, only commit after testing on actual devices

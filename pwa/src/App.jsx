@@ -46,6 +46,9 @@ function App() {
             StatusPersistence.clearLastError()
             showToast(successMessages.pairing.success, 'success')
             notifications.showPairingSuccess(deviceType)
+
+            // Automatically redirect to prompt screen after successful pairing
+            window.history.pushState(null, '', '/prompt')
         },
         onPromptDelivered: (message) => {
             showToast(`${successMessages.prompt.sent} ${getRandomQuip('success')}`, 'success')
@@ -64,8 +67,45 @@ function App() {
         }
     })
 
-    // Load saved state on startup
+    // Load saved state on startup and check for QR code parameters
     useEffect(() => {
+        // Check URL for pairing code from QR scan
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeFromUrl = urlParams.get('code');
+
+        if (codeFromUrl) {
+            // Clear the URL parameter to avoid reusing it on refresh
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // Show toast to indicate we're processing the QR code
+            showToast('QR code detected! Connecting...', 'info');
+
+            // Connect and pair with the code from URL
+            connect();
+
+            // Wait a moment for connection to establish
+            setTimeout(() => {
+                if (isConnected) {
+                    handlePair(codeFromUrl);
+                } else {
+                    showToast('Connecting to server...', 'info');
+                    // Try again after connection
+                    const checkInterval = setInterval(() => {
+                        if (isConnected) {
+                            handlePair(codeFromUrl);
+                            clearInterval(checkInterval);
+                        }
+                    }, 500);
+
+                    // Stop checking after 10 seconds
+                    setTimeout(() => clearInterval(checkInterval), 10000);
+                }
+            }, 500);
+
+            return;
+        }
+
+        // Normal startup with saved token
         const savedToken = localStorage.getItem('kim-token')
         if (savedToken) {
             setToken(savedToken)
@@ -124,6 +164,29 @@ function App() {
                 timestamp: Date.now()
             }
         })
+    }
+
+    // Helper function for pairing from URL parameters (QR code scan)
+    const handleQRCodePairing = (code) => {
+        // First ensure we're connected
+        if (!isConnected) {
+            // Try to connect first
+            connect();
+
+            // Wait for connection and then pair
+            const checkInterval = setInterval(() => {
+                if (isConnected) {
+                    handlePair(code);
+                    clearInterval(checkInterval);
+                }
+            }, 500);
+
+            // Stop checking after 10 seconds
+            setTimeout(() => clearInterval(checkInterval), 10000);
+        } else {
+            // Already connected, just pair
+            handlePair(code);
+        }
     }
 
     const handleSendPrompt = (prompt) => {

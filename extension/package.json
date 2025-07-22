@@ -52,6 +52,11 @@
                 "command": "kim.injectPrompt",
                 "title": "Send Prompt to Copilot Chat",
                 "category": "KIM"
+            },
+            {
+                "command": "kim.showMiniQR",
+                "title": "Show Mini QR Code",
+                "category": "KIM"
             }
         ],
         "configuration": {
@@ -80,15 +85,16 @@
         "package": "vsce package"
     },
     "dependencies": {
+        "qrcode": "^1.5.4",
         "ws": "^8.14.2"
     },
     "devDependencies": {
         "@types/vscode": "^1.85.0",
         "@types/ws": "^8.5.10",
         "@vscode/test-electron": "^2.3.8",
-        "vsce": "^2.15.0",
+        "glob": "^10.3.10",
         "mocha": "^10.2.0",
-        "glob": "^10.3.10"
+        "vsce": "^2.15.0"
     },
     "repository": {
         "type": "git",

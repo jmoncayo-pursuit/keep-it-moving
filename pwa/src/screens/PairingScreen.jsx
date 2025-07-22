@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import QRCode from 'react-qr-code'
+import QRScanner from '../components/QRScanner'
 
 function PairingScreen({ deviceType, onPair, isConnecting }) {
     const [manualCode, setManualCode] = useState('')
     const [showQR, setShowQR] = useState(deviceType === 'phone')
     const [validationError, setValidationError] = useState('')
+    const [isScanning, setIsScanning] = useState(false)
 
     const handleManualPair = (e) => {
         e.preventDefault()
@@ -23,13 +25,59 @@ function PairingScreen({ deviceType, onPair, isConnecting }) {
         onPair(manualCode)
     }
 
-    // Generate QR data with pairing instructions
-    const qrData = JSON.stringify({
-        type: 'kim-pairing',
-        url: window.location.origin,
-        instructions: 'Open this URL and enter the pairing code from VS Code',
-        timestamp: Date.now()
-    })
+    // Handle QR code scan
+    const handleQRScan = (data) => {
+        console.log('QR code scanned:', data)
+
+        try {
+            // Check if it's a URL with code parameter
+            if (data && typeof data === 'string' && data.includes('?code=')) {
+                const url = new URL(data);
+                const code = url.searchParams.get('code');
+
+                if (code && code.length === 6) {
+                    // Auto-fill the code if in manual mode
+                    if (!showQR) {
+                        setManualCode(code);
+                    }
+
+                    // Directly pair with the code
+                    onPair(code);
+                    return;
+                }
+            }
+
+            // Try parsing as JSON (fallback for older QR codes)
+            try {
+                const jsonData = JSON.parse(data);
+                if (jsonData && jsonData.type === 'kim-pairing' && jsonData.code) {
+                    // Auto-fill the code if in manual mode
+                    if (!showQR) {
+                        setManualCode(jsonData.code);
+                    }
+
+                    // Directly pair with the code
+                    onPair(jsonData.code);
+                    return;
+                }
+            } catch (e) {
+                // Not JSON, continue with other checks
+            }
+
+            setValidationError('Invalid QR code format. Please try again.');
+        } catch (error) {
+            setValidationError('Failed to process QR code: ' + error.message);
+        }
+    }
+
+    const handleQRError = (error) => {
+        setValidationError(error)
+    }
+
+    // Toggle QR scanner
+    const toggleScanner = () => {
+        setIsScanning(!isScanning)
+    }
 
     return (
         <div className="max-w-md mx-auto">
@@ -68,34 +116,39 @@ function PairingScreen({ deviceType, onPair, isConnecting }) {
                 </div>
 
                 {showQR ? (
-                    /* QR Code Pairing */
+                    /* QR Code Scanning */
                     <div className="space-y-6">
-                        <div className="bg-white p-4 rounded-lg inline-block relative transform hover:scale-105 transition-transform duration-300">
-                            <QRCode
-                                value={qrData}
-                                size={200}
-                                className="animate-pulse-slow"
+                        {isScanning ? (
+                            <QRScanner
+                                onScan={handleQRScan}
+                                onError={handleQRError}
                             />
-                            <div className="absolute -top-2 -right-2 animate-bounce">
-                                <span className="text-2xl">📱</span>
-                            </div>
-                            <div className="absolute -bottom-2 -left-2 animate-wiggle">
-                                <span className="text-lg">👆</span>
-                            </div>
-                        </div>
+                        ) : (
+                            <div className="text-center">
+                                <button
+                                    onClick={toggleScanner}
+                                    className="kim-button"
+                                >
+                                    <span className="emoji">📷</span> Scan QR Code
+                                </button>
 
-                        <div className="space-y-2">
-                            <p className="text-gray-300 text-sm">
-                                <span className="emoji animate-bounce-slow">📱</span>
-                                Scan with your phone camera
+                                <div className="mt-4 space-y-2">
+                                    <p className="text-gray-300 text-sm">
+                                        <span className="emoji">📱</span>
+                                        Scan the QR code shown in VS Code
+                                    </p>
+                                    <p className="text-gray-400 text-xs">
+                                        Or switch to manual entry above
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {validationError && (
+                            <p className="text-kim-red text-sm mt-2 animate-pulse">
+                                {validationError}
                             </p>
-                            <p className="text-gray-400 text-xs">
-                                Or switch to manual entry above
-                            </p>
-                            <p className="text-kim-blue text-xs animate-pulse">
-                                <span className="emoji">✨</span> Point and scan for instant pairing magic!
-                            </p>
-                        </div>
+                        )}
                     </div>
                 ) : (
                     /* Manual Code Entry */
