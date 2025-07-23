@@ -26,48 +26,35 @@ function PairingScreen({ deviceType, onPair, isConnecting }) {
     }
 
     // Handle QR code scan
-    const handleQRScan = (data) => {
-        console.log('QR code scanned:', data)
+    const handleQRScan = (code) => {
+        console.log('QR code scanned in PairingScreen:', code)
+        setValidationError(''); // Clear any previous errors
 
-        try {
-            // Check if it's a URL with code parameter
-            if (data && typeof data === 'string' && data.includes('?code=')) {
-                const url = new URL(data);
-                const code = url.searchParams.get('code');
-
-                if (code && code.length === 6) {
-                    // Auto-fill the code if in manual mode
-                    if (!showQR) {
-                        setManualCode(code);
-                    }
-
-                    // Directly pair with the code
-                    onPair(code);
-                    return;
-                }
-            }
-
-            // Try parsing as JSON (fallback for older QR codes)
-            try {
-                const jsonData = JSON.parse(data);
-                if (jsonData && jsonData.type === 'kim-pairing' && jsonData.code) {
-                    // Auto-fill the code if in manual mode
-                    if (!showQR) {
-                        setManualCode(jsonData.code);
-                    }
-
-                    // Directly pair with the code
-                    onPair(jsonData.code);
-                    return;
-                }
-            } catch (e) {
-                // Not JSON, continue with other checks
-            }
-
-            setValidationError('Invalid QR code format. Please try again.');
-        } catch (error) {
-            setValidationError('Failed to process QR code: ' + error.message);
+        // Validate the code format
+        if (!code || typeof code !== 'string') {
+            setValidationError('Invalid QR code data received.');
+            return;
         }
+
+        // Check if it's a 6-digit code
+        if (!/^\d{6}$/.test(code)) {
+            setValidationError('QR code must contain a 6-digit pairing code.');
+            return;
+        }
+
+        console.log('✅ Valid pairing code from QR:', code);
+
+        // Auto-fill the code if in manual mode
+        if (!showQR) {
+            setManualCode(code);
+        }
+
+        // Show success feedback
+        setValidationError(''); // Clear errors
+
+        // Directly pair with the code
+        console.log('🚀 Initiating pairing with scanned code...');
+        onPair(code);
     }
 
     const handleQRError = (error) => {

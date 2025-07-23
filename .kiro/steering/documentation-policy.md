@@ -30,11 +30,16 @@
 5. Only then publish or update public docs
 
 ### Private vs Public Documentation
-- **Private** (`.kiro/private/`): Plans, ideas, untested features, internal notes, task lists
+- **Private** (`.kiro/`): All Kiro-related files including specs, steering, and private documents
 - **Public** (README, docs/): Only verified, working functionality
 
+### Version Control
+- The entire `.kiro/` directory is excluded from git tracking via .gitignore
+- Do not reference .kiro files in commit messages or public documentation
+- Keep all development planning, specs, and task lists within the .kiro directory
+
 ### Task Management
-- Task lists and planning documents should be kept in `.kiro/private/`
+- Task lists and planning documents should be kept in the `.kiro/` directory
 - Never mention private task lists in commit messages
 - Only commit code changes after functionality is verified to work
 - QR code and mobile functionality must be tested on actual devices before committing

@@ -21,9 +21,7 @@
         "ForTheLoveOfCode"
     ],
     "activationEvents": [
-        "onStartupFinished",
-        "onCommand:kim.injectPrompt",
-        "onCommand:kim.connectToServer"
+        "onStartupFinished"
     ],
     "main": "./extension.js",
     "contributes": {
@@ -44,18 +42,8 @@
                 "category": "KIM"
             },
             {
-                "command": "kim.connectToServer",
-                "title": "Connect to Server",
-                "category": "KIM"
-            },
-            {
                 "command": "kim.injectPrompt",
                 "title": "Send Prompt to Copilot Chat",
-                "category": "KIM"
-            },
-            {
-                "command": "kim.showMiniQR",
-                "title": "Show Mini QR Code",
                 "category": "KIM"
             }
         ],
@@ -76,6 +64,11 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Automatically start the relay server when VS Code opens"
+                },
+                "kim.pwaPort": {
+                    "type": "number",
+                    "default": 3000,
+                    "description": "Port where the PWA is running (auto-detects if different)"
                 }
             }
         }
@@ -86,7 +79,8 @@
     },
     "dependencies": {
         "qrcode": "^1.5.4",
-        "ws": "^8.14.2"
+        "ws": "^8.14.2",
+        "uuid": "^9.0.1"
     },
     "devDependencies": {
         "@types/vscode": "^1.85.0",

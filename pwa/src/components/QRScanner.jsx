@@ -34,15 +34,51 @@ function QRScanner({ onScan, onError }) {
                 },
                 (decodedText) => {
                     // Success callback
-                    try {
-                        const data = JSON.parse(decodedText)
-                        onScan(data)
+                    console.log('QR code scanned:', decodedText)
+
+                    // Handle both URL format and direct code format
+                    let extractedCode = null;
+
+                    // If it's a URL with code parameter, extract the code
+                    if (decodedText.includes('?code=')) {
+                        try {
+                            const url = new URL(decodedText)
+                            const code = url.searchParams.get('code')
+                            if (code && code.length === 6 && /^\d{6}$/.test(code)) {
+                                extractedCode = code;
+                                console.log('✅ Extracted code from URL:', extractedCode);
+                            }
+                        } catch (error) {
+                            console.error('Failed to parse URL:', error)
+                        }
+                    }
+                    // Check if it's a direct 6-digit code
+                    else if (/^\d{6}$/.test(decodedText)) {
+                        extractedCode = decodedText;
+                        console.log('✅ Direct code detected:', extractedCode);
+                    }
+                    // Try parsing as JSON (legacy format)
+                    else {
+                        try {
+                            const jsonData = JSON.parse(decodedText);
+                            if (jsonData && jsonData.code && /^\d{6}$/.test(jsonData.code)) {
+                                extractedCode = jsonData.code;
+                                console.log('✅ Extracted code from JSON:', extractedCode);
+                            }
+                        } catch (e) {
+                            // Not JSON, that's okay
+                        }
+                    }
+
+                    if (extractedCode) {
+                        onScan(extractedCode);
 
                         // Stop scanning after successful scan
                         html5QrCode.stop().catch(error => console.error('Failed to stop scanner:', error))
                         setIsScanning(false)
-                    } catch (error) {
-                        onError('Invalid QR code format. Please try again.')
+                    } else {
+                        console.warn('⚠️ Invalid QR code format:', decodedText);
+                        // Don't stop scanning, let user try again
                     }
                 },
                 (errorMessage) => {

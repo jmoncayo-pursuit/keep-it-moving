@@ -3,6 +3,7 @@
 
 const WebSocket = require('ws');
 const { v4: uuidv4 } = require('uuid');
+const PWAServer = require('./pwa-server');
 
 /**
  * KIM Relay Server - The heart of local-first prompt relaying! 🚀
@@ -20,6 +21,7 @@ class KIMRelayServer {
         /** @type {Map<string, Object>} code -> { token, expires, deviceType } */
         this.pairingSessions = new Map();
         this.vsCodeConnection = null;
+        this.pwaServer = null;
     }
 
     /**
@@ -155,6 +157,10 @@ class KIMRelayServer {
 
         console.log(`🎉 KIM Server running on ws://localhost:${this.port}`);
         console.log('📡 Ready to relay prompts with emoji magic!');
+
+        // Start PWA server on port 3000 (or next available)
+        this.pwaServer = new PWAServer(3000);
+        this.pwaServer.start();
     }
 
     handleMessage(ws, message) {
@@ -503,6 +509,12 @@ class KIMRelayServer {
     stop() {
         if (this.wss) {
             console.log('🛑 Stopping KIM Relay Server...');
+
+            // Stop PWA server too
+            if (this.pwaServer) {
+                this.pwaServer.stop();
+                this.pwaServer = null;
+            }
             this.wss.close();
         }
 

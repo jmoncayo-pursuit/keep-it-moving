@@ -22,13 +22,20 @@ code --install-extension kim-vscode-extension-1.0.0.vsix
 ### 2. Generate Pairing Code
 
 1. Open VS Code Command Palette (Ctrl/Cmd+Shift+P)
-2. Run: `KIM: Toggle Server` to start the server
-3. Run: `KIM: Show Pairing Code` to get your code
+2. Run: `KIM: Show Pairing Code` (auto-starts server)
+3. QR code and pairing code appear in VS Code panel
 
 ### 3. Connect Your Device
 
-1. Open the PWA URL shown in VS Code
-2. Enter the 6-digit code or scan QR code  
+**Option A: QR Code (Recommended)**
+1. Scan QR code with your phone
+2. PWA opens automatically
+3. Enter the 6-digit code shown in VS Code
+4. Start sending prompts!
+
+**Option B: Manual**
+1. Visit the URL shown in VS Code (e.g., `http://192.168.1.59:8080`)
+2. Enter the 6-digit pairing code
 3. Start sending prompts!
 
 ## Current Features
@@ -37,6 +44,8 @@ code --install-extension kim-vscode-extension-1.0.0.vsix
 - **Device Pairing**: 6-digit code or QR code pairing
 - **PWA Interface**: Web app for mobile devices
 - **WebSocket Communication**: Real-time prompt relay
+- **Performance-Optimized QR Codes**: Lightweight notification-based QR code sharing
+- **Seamless Copilot Integration**: Custom hook for effortless prompt delivery
 
 ## How It Works
 
@@ -44,6 +53,63 @@ code --install-extension kim-vscode-extension-1.0.0.vsix
 2. Extension generates a pairing code
 3. Device connects to PWA using the code
 4. Prompts sent from device appear in VS Code Copilot chat
+
+## Architecture
+
+🏗️ **[View Detailed Architecture](./ARCHITECTURE.md)** - See the innovative embedded server design
+
+🎉 **[View Major Milestones](./MILESTONES.md)** - Celebrate the technical breakthroughs
+
+## Technical Highlights
+
+### Performance-Optimized QR Code Sharing
+
+We've implemented a lightweight notification-based approach for sharing QR codes:
+
+- **Notification-Based**: Instead of resource-intensive hover functionality, QR codes are displayed via notifications
+- **On-Demand Generation**: QR codes are only generated when explicitly requested
+- **Two-Step Process**: Simple notification with pairing code first, full QR code only when needed
+- **Improved Performance**: Eliminates VS Code slowdowns and freezes that occurred with hover-based implementation
+
+### Seamless Copilot Integration
+
+We've created a custom hook that elegantly integrates with VS Code's Chat API for effortless prompt delivery:
+
+```javascript
+// Seamless integration with VS Code Chat API
+await vscode.commands.executeCommand('workbench.action.chat.open', {
+    query: prompt
+});
+```
+
+This elegant solution provides:
+- **Instant Delivery**: Prompts appear immediately in Copilot chat
+- **Native Integration**: Uses VS Code's official Chat API
+- **Context Preservation**: Maintains conversation flow between prompts
+- **Full Character Support**: Handles emoji and special characters perfectly
+
+## Extension Commands
+
+Once installed, KIM adds these commands to VS Code:
+
+- **KIM: Toggle Server** - Start/stop the local relay server
+- **KIM: Show Pairing Code** - Generate and display QR code for device pairing
+- **KIM: Show Status** - View connection status and server info
+- **KIM: Connect to Server** - Manually connect to running server
+
+### Using the Extension
+
+1. **Start the Server**: Use `KIM: Toggle Server` or check the KIM status in the status bar
+2. **Generate Pairing Code**: Use `KIM: Show Pairing Code` to get your QR code
+3. **Check Status**: Click the KIM status bar item or use `KIM: Show Status`
+4. **Stop Server**: Use `KIM: Toggle Server` again to stop
+
+### Troubleshooting
+
+- **Server won't start**: Check if port 8080-8084 are available
+- **No pairing code**: Make sure server is running first
+- **VS Code slow**: Restart VS Code if you experience performance issues
+- **Connection issues**: Use `KIM: Connect to Server` to reconnect
 
 ## Development
 

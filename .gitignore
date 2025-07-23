@@ -44,4 +44,4 @@ tmp/
 temp/
 
 # Private development files
-.kiro/private/
+.kiro/
