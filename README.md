@@ -38,9 +38,7 @@ code --install-extension kim-vscode-extension-1.0.0.vsix
 2. Enter the 6-digit pairing code
 3. Start sending prompts!
 
-## 🏆 **Contest-Winning Features**
-
-### 🚀 **Technical Breakthroughs**
+## Technical Breakthroughs
 - **Embedded Server**: First-of-its-kind WebSocket server running inside VS Code extension
 - **Self-Hosting PWA**: Complete web app served directly from extension (no external hosting)
 - **Dynamic Port Discovery**: Intelligent fallback system for bulletproof startup
@@ -70,18 +68,6 @@ code --install-extension kim-vscode-extension-1.0.0.vsix
 🏗️ **[View Detailed Architecture](./ARCHITECTURE.md)** - See the innovative embedded server design
 
 🎉 **[View Major Milestones](./MILESTONES.md)** - Celebrate the technical breakthroughs
-
-## 🎯 **For the Love of Code 2025**
-
-This project embodies the hackathon spirit:
-- **Innovation over convention**: Embedded server architecture
-- **Joy over frustration**: Delightful error messages and emoji feedback  
-- **Local-first over cloud-dependent**: Zero external dependencies
-- **Developer-focused**: Enhances the GitHub Copilot workflow
-
-Built with ❤️ for developers who love to code, anywhere, anytime.
-
-**#ForTheLoveOfCode** **#VSCode** **#GitHubCopilot** **#LocalFirst** **#Innovation**
 
 ## Technical Highlights
 

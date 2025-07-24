@@ -2,7 +2,7 @@
 
 ## Overview
 
-Keep-It-Moving is a **groundbreaking local-first system** that enables developers to send prompts from any device to VS Code's GitHub Copilot chat. Built for "For the Love of Code 2025" hackathon, it showcases innovative architecture with **zero cloud dependencies** and **joyful user experience**.
+Keep-It-Moving is a **groundbreaking local-first system** that enables developers to send prompts from any device to VS Code's GitHub Copilot chat. It showcases innovative architecture with **zero cloud dependencies** and **joyful user experience**.
 
 ## 🏆 **Major Architectural Achievements**
 

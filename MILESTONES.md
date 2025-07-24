@@ -1,7 +1,7 @@
 # 🎉 Keep-It-Moving: Major Milestones Achieved!
 
 ## 🚀 **Project Overview**
-Keep-It-Moving (KIM) is a hackathon project for "For the Love of Code 2025" that enables developers to send prompts from any device to VS Code's GitHub Copilot chat. What started as a simple idea became a showcase of innovative architecture and engineering excellence.
+Keep-It-Moving (KIM) enables developers to send prompts from any device to VS Code's GitHub Copilot chat. What started as a simple idea became a showcase of innovative architecture and engineering excellence.
 
 ## 🏆 **Major Technical Achievements**
 
@@ -167,16 +167,6 @@ httpServer.on('request', (req, res) => {
 - [ ] Plugin ecosystem
 - [ ] Cloud relay option
 
-## 🎯 **For the Love of Code 2025**
-
-This project embodies the hackathon spirit:
-- **Innovation over convention**
-- **User experience over technical complexity**
-- **Joy over frustration**
-- **Local-first over cloud-dependent**
-
-Built with ❤️ for developers who love to code, anywhere, anytime.
-
 ---
 
-**#ForTheLoveOfCode** **#VSCode** **#Hackathon2025** **#LocalFirst** **#Innovation**
+**#VSCode** **#LocalFirst** **#Innovation**

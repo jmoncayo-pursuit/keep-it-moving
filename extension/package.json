@@ -8,7 +8,7 @@
         "vscode": "^1.85.0"
     },
     "enabledApiProposals": [
-        "chatVariableResolver"
+        "chatProvider"
     ],
     "categories": [
         "Other"
@@ -16,9 +16,7 @@
     "keywords": [
         "copilot",
         "remote",
-        "prompts",
-        "hackathon",
-        "ForTheLoveOfCode"
+        "prompts"
     ],
     "activationEvents": [
         "onStartupFinished"
@@ -79,8 +77,8 @@
     },
     "dependencies": {
         "qrcode": "^1.5.4",
-        "ws": "^8.14.2",
-        "uuid": "^9.0.1"
+        "uuid": "^9.0.1",
+        "ws": "^8.18.3"
     },
     "devDependencies": {
         "@types/vscode": "^1.85.0",

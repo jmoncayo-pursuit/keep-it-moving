@@ -22,6 +22,11 @@ build/
 *.swp
 *.swo
 
+# AI Assistant files
+.codeium/
+.cursor/
+.copilot/
+
 # OS files
 .DS_Store
 Thumbs.db
