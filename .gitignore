@@ -44,4 +44,8 @@ tmp/
 temp/
 
 # Private development files
+*.kiro
+*steering/
+
+# Kiro IDE private files and directories
 .kiro/

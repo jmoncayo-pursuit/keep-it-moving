@@ -153,6 +153,6 @@ MIT License
 
 <div align="center">
 
-**#ForTheLoveOfCode 2025** 🚀
+**Keep-It-Moving** - Remote Copilot Prompting Made Easy 🚀
 
 </div>

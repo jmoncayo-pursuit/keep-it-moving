@@ -17,8 +17,8 @@
         "copilot",
         "remote",
         "prompts",
-        "hackathon",
-        "ForTheLoveOfCode"
+        "mobile",
+        "productivity"
     ],
     "activationEvents": [
         "onStartupFinished"
@@ -45,8 +45,38 @@
                 "command": "kim.injectPrompt",
                 "title": "Send Prompt to Copilot Chat",
                 "category": "KIM"
+            },
+            {
+                "command": "kim.openPanel",
+                "title": "Open KIM Panel",
+                "category": "KIM",
+                "icon": "$(rocket)"
             }
         ],
+        "views": {
+            "explorer": [
+                {
+                    "id": "kimPanel",
+                    "name": "Keep-It-Moving 🚀",
+                    "when": "true"
+                }
+            ]
+        },
+        "viewsWelcome": [
+            {
+                "view": "kimPanel",
+                "contents": "Welcome to Keep-It-Moving! 🚀\n\nSend prompts from any device to VS Code Copilot.\n\n[🚀 Open Control Panel](command:kim.openPanel)\n\n[📱 Quick Pairing Code](command:kim.showPairingCode)\n\nThe control panel gives you full access to all KIM features!"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "kim.openPanel",
+                    "when": "view == kimPanel",
+                    "group": "navigation"
+                }
+            ]
+        },
         "configuration": {
             "title": "Keep-It-Moving",
             "properties": {
@@ -62,7 +92,7 @@
                 },
                 "kim.autoStartServer": {
                     "type": "boolean",
-                    "default": false,
+                    "default": true,
                     "description": "Automatically start the relay server when VS Code opens"
                 },
                 "kim.pwaPort": {

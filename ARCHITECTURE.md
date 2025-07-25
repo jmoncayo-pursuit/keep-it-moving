@@ -2,27 +2,27 @@
 
 ## Overview
 
-Keep-It-Moving is a **groundbreaking local-first system** that enables developers to send prompts from any device to VS Code's GitHub Copilot chat. Built for "For the Love of Code 2025" hackathon, it showcases innovative architecture with **zero cloud dependencies** and **joyful user experience**.
+Keep-It-Moving is a local-first system that enables developers to send prompts from any device to VS Code's GitHub Copilot chat. The system features an embedded server architecture with zero cloud dependencies and focuses on user experience.
 
-## 🏆 **Major Architectural Achievements**
+## Key Architectural Features
 
-### 🔧 **Custom VS Code Extension with Embedded Server**
-- **Breakthrough**: Built a fully embedded WebSocket server inside a VS Code extension
-- **Innovation**: No external processes needed - everything runs within VS Code
-- **Smart Port Management**: Dynamic port discovery with automatic fallback
-- **Integrated PWA Serving**: Extension serves its own web interface
+### VS Code Extension with Embedded Server
+- Embedded WebSocket server inside VS Code extension
+- No external processes needed - everything runs within VS Code
+- Dynamic port discovery with automatic fallback
+- Extension serves its own web interface
 
-### 📱 **Embedded PWA Architecture** 
-- **Revolutionary**: PWA served directly from VS Code extension (not separate server)
-- **Seamless Integration**: QR codes point to extension's embedded server
-- **Auto-Pairing**: URL parameters automatically fill pairing codes
-- **Mobile-First**: Responsive design that works on any device
+### Embedded PWA Architecture
+- PWA served directly from VS Code extension
+- QR codes point to extension's embedded server
+- URL parameters automatically fill pairing codes
+- Responsive design that works on any device
 
-### 🔐 **Advanced Authentication System**
-- **UUID v4 Tokens**: Cryptographically secure 122-bit entropy
-- **Dynamic Session Management**: 24-hour expiry with activity tracking
-- **Automatic Cleanup**: Expired tokens removed automatically
-- **Graceful Error Handling**: Friendly messages like "Your coding session took a coffee break! ☕"
+### Authentication System
+- UUID v4 tokens for secure authentication
+- Session management with automatic expiry
+- Automatic cleanup of expired tokens
+- User-friendly error messages
 
 ## Core Components
 
@@ -46,56 +46,35 @@ Keep-It-Moving is a **groundbreaking local-first system** that enables developer
 - **QR code generation**: Creates pairing codes with embedded URLs
 - **Status management**: Real-time connection status in status bar
 
-## 🎉 **MILESTONE CELEBRATIONS**
+## Technical Implementation
 
-### 🏆 **Technical Breakthroughs Achieved**
+### Embedded Server Innovation
+Successfully embedded a full WebSocket server inside a VS Code extension:
+- Uses Node.js `ws` library directly in extension context
+- Zero external dependencies, simple setup
+- Eliminates need for separate server processes
 
-#### 🚀 **Embedded Server Innovation**
-**FIRST OF ITS KIND**: Successfully embedded a full WebSocket server inside a VS Code extension
-- **Challenge**: VS Code extensions typically can't run servers
-- **Solution**: Used Node.js `ws` library directly in extension context
-- **Result**: Zero external dependencies, one-click setup
+### Self-Hosting PWA
+Extension serves its own web interface:
+- Embedded HTML/CSS/JS directly in extension code
+- QR codes point to extension's own server
+- No separate hosting required
 
-#### 📱 **Self-Hosting PWA**
-**ARCHITECTURAL BREAKTHROUGH**: Extension serves its own web interface
-- **Challenge**: PWAs usually need separate hosting
-- **Solution**: Embedded HTML/CSS/JS directly in extension code
-- **Result**: QR codes point to extension's own server
+### Connection Management
+Intelligent port discovery system:
+- Smart fallback through multiple port ranges
+- Handles port conflicts automatically
+- Reliable startup process
 
-#### 🔧 **Custom Hook Architecture**
-**DEVELOPMENT ACHIEVEMENT**: Built custom React-like hooks for VS Code extension
-- **Innovation**: Created `useWebSocket` equivalent for extension context
-- **Pattern**: Reusable connection management with state handling
-- **Impact**: Clean, maintainable code architecture
+### Security Implementation
+- UUID v4 tokens for authentication
+- Session management with automatic expiry
+- Local-first approach - no data leaves user's network
 
-#### 🎯 **Dynamic Port Management**
-**RELIABILITY BREAKTHROUGH**: Intelligent port discovery system
-- **Problem**: Port conflicts breaking user experience
-- **Solution**: Smart fallback through multiple port ranges
-- **Result**: 100% startup success rate
-
-#### 🔐 **Enterprise-Grade Security**
-**SECURITY ACHIEVEMENT**: Implemented proper authentication without complexity
-- **UUID v4 tokens**: 122-bit cryptographic security
-- **Session management**: Automatic expiry and cleanup
-- **Local-first**: No data leaves user's network
-
-### 🎊 **User Experience Victories**
-
-#### ⚡ **Sub-2-Second Setup**
-- Install extension → Generate QR code → Scan → Send prompts
-- **Total time**: Under 60 seconds from zero to working
-
-#### 📱 **Universal Device Support**
-- **Phones**: iOS Safari, Android Chrome
-- **Tablets**: iPad, Android tablets  
-- **Laptops**: Any modern browser
-- **Result**: True cross-platform experience
-
-#### 😊 **Joyful Error Handling**
-- "Your coding session took a coffee break! ☕"
-- "QR code got stage fright! 🎭"
-- **Impact**: Errors become delightful moments
+### User Experience Features
+- Quick setup process
+- Universal device support (phones, tablets, laptops)
+- User-friendly error messages
 
 ## Current Working Flow
 

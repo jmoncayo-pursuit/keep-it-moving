@@ -322,6 +322,65 @@ class EmbeddedKIMServer {
                         margin: 10px 0;
                         word-break: break-all;
                     }
+                    .history-section {
+                        margin-top: 20px;
+                        padding-top: 15px;
+                        border-top: 1px solid #555;
+                    }
+                    .history-section h4 {
+                        margin: 0 0 10px 0;
+                        font-size: 16px;
+                        color: #e0e0e0;
+                    }
+                    .prompt-history {
+                        background: #222;
+                        border-radius: 6px;
+                        padding: 10px;
+                        max-height: 200px;
+                        overflow-y: auto;
+                        margin-bottom: 10px;
+                    }
+                    .history-item {
+                        background: #333;
+                        padding: 8px 10px;
+                        margin: 5px 0;
+                        border-radius: 4px;
+                        border-left: 3px solid #3b82f6;
+                        font-size: 13px;
+                        line-height: 1.4;
+                        cursor: pointer;
+                        transition: background-color 0.2s ease;
+                    }
+                    .history-item:hover {
+                        background: #404040;
+                        border-left-color: #60a5fa;
+                    }
+                    .history-item .timestamp {
+                        color: #888;
+                        font-size: 11px;
+                        margin-bottom: 4px;
+                    }
+                    .history-item .prompt-text {
+                        color: #e0e0e0;
+                        word-wrap: break-word;
+                    }
+                    .history-item .reuse-hint {
+                        color: #888;
+                        font-size: 10px;
+                        margin-top: 4px;
+                        opacity: 0;
+                        transition: opacity 0.2s ease;
+                    }
+                    .history-item:hover .reuse-hint {
+                        opacity: 1;
+                    }
+                    .history-empty {
+                        color: #888;
+                        font-style: italic;
+                        text-align: center;
+                        padding: 20px;
+                        margin: 0;
+                    }
                 </style>
             </head>
             <body>
@@ -347,6 +406,15 @@ class EmbeddedKIMServer {
                         <h3>💬 Send Prompt to Copilot</h3>
                         <textarea id="promptInput" class="prompt-input" placeholder="Enter your prompt for GitHub Copilot..."></textarea>
                         <button class="button" id="sendButton" onclick="sendPrompt()">Send to Copilot 🚀</button>
+                        
+                        <div class="history-section">
+                            <h4>📜 Recent Prompts</h4>
+                            <div id="promptHistory" class="prompt-history">
+                                <p class="history-empty">No prompts sent yet. Send your first prompt above! 🚀</p>
+                            </div>
+                            <button class="button" id="clearHistory" style="background: #6b7280; font-size: 12px; padding: 6px 12px;">🗑️ Clear History</button>
+                        </div>
+                        
                         <button class="button" onclick="disconnect()" style="background: #ef4444; margin-top: 10px;">Disconnect</button>
                     </div>
                 </div>
@@ -356,6 +424,7 @@ class EmbeddedKIMServer {
                     let token = null;
                     let isConnected = false;
                     let isPaired = false;
+                    let promptHistory = [];
 
                     // Auto-detect server URL from current page
                     const wsUrl = '${wsUrl}';
@@ -488,6 +557,9 @@ class EmbeddedKIMServer {
                             return;
                         }
                         
+                        // Add to history before sending
+                        addToHistory(prompt);
+                        
                         ws.send(JSON.stringify({
                             type: 'prompt',
                             token: token,
@@ -496,6 +568,60 @@ class EmbeddedKIMServer {
                         
                         document.getElementById('promptInput').value = '';
                         showToast('Sending prompt...', 'info');
+                    }                  
+
+                    function addToHistory(prompt) {
+                        const historyItem = {
+                            prompt: prompt,
+                            timestamp: new Date(),
+                            id: Date.now()
+                        };
+                        
+                        promptHistory.unshift(historyItem); // Add to beginning
+                        
+                        // Keep only last 10 prompts
+                        if (promptHistory.length > 10) {
+                            promptHistory = promptHistory.slice(0, 10);
+                        }
+                        
+                        updateHistoryDisplay();
+                    }
+                    
+                    function updateHistoryDisplay() {
+                        const historyContainer = document.getElementById('promptHistory');
+                        
+                        if (promptHistory.length === 0) {
+                            historyContainer.innerHTML = '<p class="history-empty">No prompts sent yet. Send your first prompt above! 🚀</p>';
+                            return;
+                        }
+                        
+                        const historyHTML = promptHistory.map(item => {
+                            const timeStr = item.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            const truncatedPrompt = item.prompt.length > 100 ? 
+                                item.prompt.substring(0, 100) + '...' : 
+                                item.prompt;
+                            
+                            return \`
+                                <div class="history-item" onclick="reusePrompt('\${item.prompt.replace(/'/g, "\\'")}')">
+                                    <div class="timestamp">📤 \${timeStr}</div>
+                                    <div class="prompt-text">\${truncatedPrompt}</div>
+                                    <div class="reuse-hint">💡 Click to reuse</div>
+                                </div>
+                            \`;
+                        }).join('');
+                        
+                        historyContainer.innerHTML = historyHTML;
+                    }
+                    
+                    function clearHistory() {
+                        promptHistory = [];
+                        updateHistoryDisplay();
+                        showToast('History cleared! 🗑️', 'info');
+                    }
+                    
+                    function reusePrompt(prompt) {
+                        document.getElementById('promptInput').value = prompt;
+                        showToast('Prompt loaded! 📝 Edit and send when ready.', 'info');
                     }
 
                     function disconnect() {
@@ -505,6 +631,9 @@ class EmbeddedKIMServer {
                         token = null;
                         updateStatus('🔴 Disconnected', false, false);
                         showToast('Disconnected from KIM server', 'info');
+                        
+                        // Clear history on disconnect
+                        clearHistory();
                     }
 
                     // Handle Enter key in inputs
@@ -515,6 +644,9 @@ class EmbeddedKIMServer {
                     document.getElementById('promptInput').addEventListener('keypress', (e) => {
                         if (e.key === 'Enter' && e.ctrlKey) sendPrompt();
                     });
+                    
+                    // Handle clear history button
+                    document.getElementById('clearHistory').addEventListener('click', clearHistory);
 
                     // Check for code in URL and auto-fill
                     const urlParams = new URLSearchParams(window.location.search);
@@ -910,7 +1042,7 @@ function activate(context) {
 
     // Create status bar item with hover capability
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    statusBarItem.command = 'kim.showStatus';
+    statusBarItem.command = 'kim.openPanel';
     updateStatusBar('🔴 Disconnected');
 
     // Add hover command to show QR code when hovering over status bar
@@ -950,6 +1082,332 @@ function activate(context) {
 
     context.subscriptions.push(hoverProvider);
     context.subscriptions.push(statusBarItem);
+
+    // KIM Tree Data Provider for Explorer View
+    class KIMTreeDataProvider {
+        constructor() {
+            this._onDidChangeTreeData = new vscode.EventEmitter();
+            this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+        }
+
+        refresh() {
+            this._onDidChangeTreeData.fire();
+        }
+
+        getTreeItem(element) {
+            return element;
+        }
+
+        getChildren(element) {
+            if (!element) {
+                // Root items
+                const serverStatus = embeddedServer ? 'Running' : 'Stopped';
+                const serverIcon = embeddedServer ? '🟢' : '🔴';
+                const codeStatus = currentPairingCode ? currentPairingCode : 'None';
+
+                return [
+                    new KIMTreeItem(
+                        `${serverIcon} Server: ${serverStatus}`,
+                        embeddedServer ? 'Stop Server' : 'Start Server',
+                        'kim.toggleServer',
+                        embeddedServer ? 'stop' : 'play'
+                    ),
+                    new KIMTreeItem(
+                        `🔢 Code: ${codeStatus}`,
+                        'Generate Pairing Code',
+                        'kim.showPairingCode',
+                        'key'
+                    ),
+                    new KIMTreeItem(
+                        '🎛️ Control Panel',
+                        'Open full control panel',
+                        'kim.openPanel',
+                        'settings-gear'
+                    )
+                ];
+            }
+            return [];
+        }
+    }
+
+    class KIMTreeItem extends vscode.TreeItem {
+        constructor(label, tooltip, command, iconName) {
+            super(label, vscode.TreeItemCollapsibleState.None);
+            this.tooltip = tooltip;
+            this.command = {
+                command: command,
+                title: tooltip
+            };
+            this.iconPath = new vscode.ThemeIcon(iconName);
+        }
+    }
+
+    // Register tree data provider
+    const kimTreeProvider = new KIMTreeDataProvider();
+    vscode.window.registerTreeDataProvider('kimPanel', kimTreeProvider);
+
+    // Refresh tree when server status changes
+    function refreshKIMTree() {
+        kimTreeProvider.refresh();
+    }
+
+    // Function to generate control panel HTML
+    function getControlPanelHTML() {
+        const config = vscode.workspace.getConfiguration('kim');
+        const autoStartEnabled = config.get('autoStartServer', true);
+        const serverStatus = embeddedServer ? 'running' : 'stopped';
+        const serverPort = embeddedServer ? embeddedServer.port : config.get('serverPort', 8080);
+        const currentCode = currentPairingCode || 'None';
+
+        return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>KIM Control Panel</title>
+                <style>
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        padding: 20px;
+                        color: var(--vscode-foreground);
+                        background-color: var(--vscode-editor-background);
+                        margin: 0;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        padding-bottom: 20px;
+                        border-bottom: 1px solid var(--vscode-panel-border);
+                    }
+                    .logo {
+                        font-size: 3em;
+                        margin-bottom: 10px;
+                    }
+                    .title {
+                        font-size: 24px;
+                        font-weight: bold;
+                        margin: 0;
+                    }
+                    .subtitle {
+                        color: var(--vscode-descriptionForeground);
+                        margin: 5px 0 0 0;
+                    }
+                    .section {
+                        background: var(--vscode-editor-inactiveSelectionBackground);
+                        border: 1px solid var(--vscode-panel-border);
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                    }
+                    .section h3 {
+                        margin: 0 0 15px 0;
+                        color: var(--vscode-foreground);
+                        font-size: 18px;
+                    }
+                    .status-indicator {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 8px 12px;
+                        border-radius: 6px;
+                        font-weight: bold;
+                        margin-bottom: 15px;
+                    }
+                    .status-running {
+                        background: var(--vscode-testing-iconPassed);
+                        color: white;
+                    }
+                    .status-stopped {
+                        background: var(--vscode-testing-iconFailed);
+                        color: white;
+                    }
+                    .button {
+                        background: var(--vscode-button-background);
+                        color: var(--vscode-button-foreground);
+                        border: none;
+                        padding: 10px 16px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        margin: 5px 5px 5px 0;
+                        transition: background-color 0.2s;
+                    }
+                    .button:hover {
+                        background: var(--vscode-button-hoverBackground);
+                    }
+                    .button.secondary {
+                        background: var(--vscode-button-secondaryBackground);
+                        color: var(--vscode-button-secondaryForeground);
+                    }
+                    .button.secondary:hover {
+                        background: var(--vscode-button-secondaryHoverBackground);
+                    }
+                    .info-grid {
+                        display: grid;
+                        grid-template-columns: auto 1fr;
+                        gap: 10px 20px;
+                        margin: 15px 0;
+                    }
+                    .info-label {
+                        font-weight: bold;
+                        color: var(--vscode-foreground);
+                    }
+                    .info-value {
+                        color: var(--vscode-descriptionForeground);
+                        font-family: monospace;
+                    }
+                    .checkbox-container {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin: 15px 0;
+                    }
+                    .checkbox {
+                        width: 16px;
+                        height: 16px;
+                    }
+                    .code-display {
+                        background: var(--vscode-textCodeBlock-background);
+                        border: 1px solid var(--vscode-panel-border);
+                        border-radius: 6px;
+                        padding: 15px;
+                        text-align: center;
+                        margin: 15px 0;
+                    }
+                    .code-number {
+                        font-size: 32px;
+                        font-weight: bold;
+                        font-family: monospace;
+                        color: var(--vscode-textLink-foreground);
+                        letter-spacing: 4px;
+                    }
+                    .refresh-btn {
+                        position: absolute;
+                        top: 20px;
+                        right: 20px;
+                        background: transparent;
+                        border: 1px solid var(--vscode-panel-border);
+                        color: var(--vscode-foreground);
+                        padding: 6px 10px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 12px;
+                    }
+                </style>
+            </head>
+            <body>
+                <button class="refresh-btn" onclick="refreshStatus()">🔄 Refresh</button>
+                
+                <div class="header">
+                    <div class="logo">🚀</div>
+                    <h1 class="title">Keep-It-Moving</h1>
+                    <p class="subtitle">Remote Copilot Prompting Made Easy</p>
+                </div>
+
+                <div class="section">
+                    <h3>📡 Server Status</h3>
+                    <div class="status-indicator ${serverStatus === 'running' ? 'status-running' : 'status-stopped'}">
+                        ${serverStatus === 'running' ? '🟢 Server Running' : '🔴 Server Stopped'}
+                    </div>
+                    
+                    <div class="info-grid">
+                        <span class="info-label">Port:</span>
+                        <span class="info-value">${serverPort}</span>
+                        <span class="info-label">Status:</span>
+                        <span class="info-value">${serverStatus === 'running' ? 'Active and ready for connections' : 'Inactive'}</span>
+                        ${serverStatus === 'running' ? `
+                        <span class="info-label">PWA URL:</span>
+                        <span class="info-value">http://localhost:${serverPort}</span>
+                        ` : ''}
+                    </div>
+
+                    <button class="button" onclick="toggleServer()">
+                        ${serverStatus === 'running' ? '🛑 Stop Server' : '🚀 Start Server'}
+                    </button>
+                </div>
+
+                <div class="section">
+                    <h3>🔗 Device Pairing</h3>
+                    <div class="code-display">
+                        <div>Current Pairing Code:</div>
+                        <div class="code-number">${currentCode}</div>
+                        <div style="font-size: 12px; color: var(--vscode-descriptionForeground); margin-top: 10px;">
+                            ${currentCode === 'None' ? 'Generate a code to start pairing devices' : 'Share this code with your mobile device'}
+                        </div>
+                    </div>
+                    
+                    <button class="button" onclick="generateCode()">🔢 Generate New Code</button>
+                    <button class="button secondary" onclick="showQRCode()">📱 Show QR Code & URL</button>
+                    ${serverStatus === 'running' && currentCode !== 'None' ?
+                `<button class="button secondary" onclick="openPWA()">🌐 Open PWA</button>` :
+                ''
+            }
+                </div>
+
+                <div class="section">
+                    <h3>⚙️ Settings</h3>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="autoStart" class="checkbox" ${autoStartEnabled ? 'checked' : ''} onchange="updateAutoStart()">
+                        <label for="autoStart">Auto-start server when VS Code opens</label>
+                    </div>
+                    <p style="font-size: 12px; color: var(--vscode-descriptionForeground); margin: 10px 0 0 24px;">
+                        When enabled, KIM will automatically start the server and be ready for device connections.
+                    </p>
+                </div>
+
+                <div class="section">
+                    <h3>📖 Quick Start</h3>
+                    <ol style="color: var(--vscode-descriptionForeground); line-height: 1.6;">
+                        <li><strong>Start the server</strong> using the button above ${serverStatus === 'running' ? '✅' : ''}</li>
+                        <li><strong>Generate a pairing code</strong> for your device ${currentCode !== 'None' ? '✅' : ''}</li>
+                        <li><strong>Open the PWA</strong> on your phone/tablet and enter the code</li>
+                        <li><strong>Send prompts</strong> directly to Copilot from anywhere!</li>
+                    </ol>
+                    
+                    ${serverStatus === 'running' && currentCode !== 'None' ? `
+                    <div style="background: var(--vscode-inputValidation-infoBackground); border: 1px solid var(--vscode-inputValidation-infoBorder); border-radius: 6px; padding: 12px; margin-top: 15px;">
+                        <strong>🎉 Ready to go!</strong> Your server is running and pairing code is active. 
+                        <br>Open the PWA on your device and enter code <strong>${currentCode}</strong> to start sending prompts!
+                    </div>
+                    ` : ''}
+                </div>
+
+                <script>
+                    const vscode = acquireVsCodeApi();
+
+                    function toggleServer() {
+                        vscode.postMessage({ command: 'toggleServer' });
+                    }
+
+                    function generateCode() {
+                        vscode.postMessage({ command: 'generateCode' });
+                    }
+
+                    function showQRCode() {
+                        vscode.postMessage({ command: 'showQRCode' });
+                    }
+
+                    function openPWA() {
+                        vscode.postMessage({ command: 'openPWA' });
+                    }
+
+                    function refreshStatus() {
+                        vscode.postMessage({ command: 'refreshStatus' });
+                    }
+
+                    function updateAutoStart() {
+                        const enabled = document.getElementById('autoStart').checked;
+                        vscode.postMessage({ 
+                            command: 'updateAutoStart', 
+                            enabled: enabled 
+                        });
+                    }
+                </script>
+            </body>
+            </html>
+        `;
+    }
 
     // Show pairing code command
     let showPairingCode = vscode.commands.registerCommand('kim.showPairingCode', async function () {
@@ -1287,6 +1745,20 @@ function activate(context) {
                             margin: 10px 0;
                             word-break: break-all;
                         }
+                        .url-link {
+                            color: #3b82f6;
+                            text-decoration: underline;
+                            cursor: pointer;
+                            display: inline-block;
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            transition: all 0.2s ease;
+                        }
+                        .url-link:hover {
+                            color: #60a5fa;
+                            background-color: rgba(59, 130, 246, 0.1);
+                            text-decoration: underline;
+                        }
                     </style>
                 </head>
                 <body>
@@ -1303,9 +1775,12 @@ function activate(context) {
                         <button class="button" id="newCode">🔄 Generate New</button>
                         
                         <div class="url">
-                            PWA URL: ${pwaUrl}
+                            <strong>📱 Mobile URL:</strong><br>
+                            <a href="#" id="urlLink" class="url-link">${pwaUrl}</a>
                         </div>
-                        <p class="text-sm mt-2">Scan this QR code with your phone to open the PWA with automatic pairing</p>
+                        <button class="button" id="copyUrl">🔗 Copy PWA URL</button>
+                        <button class="button" id="openUrl">🌐 Open in Browser</button>
+                        <p style="font-size: 12px; margin-top: 10px; color: #888;">Click the URL above to open in your default browser, or scan the QR code with your phone</p>
                         
                         <div class="instructions">
                             <h2>📱 How to Connect:</h2>
@@ -1327,9 +1802,31 @@ function activate(context) {
                             });
                         });
                         
+                        document.getElementById('copyUrl').addEventListener('click', () => {
+                            vscode.postMessage({
+                                command: 'copyUrl',
+                                url: '${pwaUrl}'
+                            });
+                        });
+                        
                         document.getElementById('newCode').addEventListener('click', () => {
                             vscode.postMessage({
                                 command: 'newCode'
+                            });
+                        });
+                        
+                        document.getElementById('openUrl').addEventListener('click', () => {
+                            vscode.postMessage({
+                                command: 'openUrl',
+                                url: '${pwaUrl}'
+                            });
+                        });
+                        
+                        document.getElementById('urlLink').addEventListener('click', (e) => {
+                            e.preventDefault();
+                            vscode.postMessage({
+                                command: 'openUrl',
+                                url: '${pwaUrl}'
                             });
                         });
                     </script>
@@ -1351,6 +1848,9 @@ function activate(context) {
                             break;
                         case 'newCode':
                             vscode.commands.executeCommand('kim.showPairingCode');
+                            break;
+                        case 'openUrl':
+                            vscode.env.openExternal(vscode.Uri.parse(message.url));
                             break;
                     }
                 },
@@ -1499,7 +1999,63 @@ function activate(context) {
         }
     });
 
-    context.subscriptions.push(showPairingCode, toggleServer, showStatus, injectPrompt);
+    // KIM Control Panel command
+    let openPanel = vscode.commands.registerCommand('kim.openPanel', async function () {
+        const panel = vscode.window.createWebviewPanel(
+            'kimControlPanel',
+            'KIM Control Panel 🚀',
+            vscode.ViewColumn.One,
+            {
+                enableScripts: true,
+                retainContextWhenHidden: true
+            }
+        );
+
+        panel.webview.html = getControlPanelHTML();
+
+        // Handle messages from the control panel
+        panel.webview.onDidReceiveMessage(
+            async message => {
+                switch (message.command) {
+                    case 'toggleServer':
+                        await vscode.commands.executeCommand('kim.toggleServer');
+                        // Refresh the panel
+                        panel.webview.html = getControlPanelHTML();
+                        break;
+                    case 'generateCode':
+                        await vscode.commands.executeCommand('kim.showPairingCode');
+                        // Refresh panel to show new code
+                        setTimeout(() => {
+                            panel.webview.html = getControlPanelHTML();
+                        }, 500);
+                        break;
+                    case 'showQRCode':
+                        await vscode.commands.executeCommand('kim.showPairingCode');
+                        break;
+                    case 'openPWA':
+                        if (embeddedServer) {
+                            const localIPs = embeddedServer.getLocalIPs();
+                            const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
+                            const pwaUrl = `http://${serverIp}:${embeddedServer.port}`;
+                            vscode.env.openExternal(vscode.Uri.parse(pwaUrl));
+                        }
+                        break;
+                    case 'refreshStatus':
+                        panel.webview.html = getControlPanelHTML();
+                        break;
+                    case 'updateAutoStart':
+                        const config = vscode.workspace.getConfiguration('kim');
+                        await config.update('autoStartServer', message.enabled, vscode.ConfigurationTarget.Global);
+                        vscode.window.showInformationMessage(`Auto-start ${message.enabled ? 'enabled' : 'disabled'} ✅`);
+                        break;
+                }
+            },
+            undefined,
+            context.subscriptions
+        );
+    });
+
+    context.subscriptions.push(showPairingCode, toggleServer, showStatus, injectPrompt, openPanel);
 
     // Auto-start embedded server on activation
     const autoStart = config.get('autoStartServer', true); // Default to true for embedded server
