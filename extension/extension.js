@@ -1340,7 +1340,7 @@ function activate(context) {
                     <button class="button" onclick="generateCode()">🔢 Generate New Code</button>
                     <button class="button secondary" onclick="showQRCode()">📱 Show QR Code & URL</button>
                     ${serverStatus === 'running' && currentCode !== 'None' ?
-                `<button class="button secondary" onclick="openPWA()">🌐 Open PWA</button>` :
+                `<button class="button secondary" onclick="openPWA()">🌐 Open PWA (Auto-Paired)</button>` :
                 ''
             }
                 </div>
@@ -2036,7 +2036,10 @@ function activate(context) {
                         if (embeddedServer) {
                             const localIPs = embeddedServer.getLocalIPs();
                             const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
-                            const pwaUrl = `http://${serverIp}:${embeddedServer.port}`;
+                            // Include the current pairing code in the URL for auto-pairing
+                            const pwaUrl = currentPairingCode ?
+                                `http://${serverIp}:${embeddedServer.port}?code=${currentPairingCode}` :
+                                `http://${serverIp}:${embeddedServer.port}`;
                             vscode.env.openExternal(vscode.Uri.parse(pwaUrl));
                         }
                         break;
