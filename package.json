@@ -11,6 +11,7 @@
         "dev": "concurrently \"npm run start\" \"npm run dev --prefix pwa\"",
         "test": "node test-runner.js",
         "build": "node scripts/build.js",
+        "package-extension": "node scripts/package-extension.js",
         "setup": "npm install && cd server && npm install && cd ../pwa && npm install && cd ../extension && npm install",
         "clean": "rm -rf dist/ && rm -rf */node_modules/"
     },
@@ -22,9 +23,7 @@
         "prompt",
         "relay",
         "websocket",
-        "pwa",
-        "hackathon",
-        "for-the-love-of-code"
+        "pwa"
     ],
     "author": "KIM Team",
     "license": "MIT",

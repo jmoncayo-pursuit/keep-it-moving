@@ -1,6 +1,13 @@
 # Documentation Policy
 
-## Public Documentation Standards
+## Contest-Ready Documentation Standards
+
+### Hackathon Documentation Focus
+- Emphasize innovation and technical breakthroughs
+- Highlight joyful user experience and delightful interactions
+- Document actual working features with clear demos
+- Show technical difficulty and ambitious problem-solving
+- Demonstrate relevance to developer tools and GitHub ecosystem
 
 ### Only Document What Works
 - Features must be functionally tested in development before any public documentation

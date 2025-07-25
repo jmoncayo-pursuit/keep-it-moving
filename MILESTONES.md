@@ -123,6 +123,7 @@ httpServer.on('request', (req, res) => {
 - Plugin ecosystem
 - Cloud relay option
 
+<<<<<<< HEAD
 ## Project Philosophy
 
 This project focuses on:
@@ -132,3 +133,8 @@ This project focuses on:
 - Local-first over cloud-dependent
 
 Built for developers who want to code from anywhere, anytime.
+=======
+---
+
+**#VSCode** **#LocalFirst** **#Innovation**
+>>>>>>> 1a4b95cfc263a10263c4a7fbb4d0378174a7f1db

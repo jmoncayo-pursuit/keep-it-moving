@@ -9,11 +9,9 @@
         "test": "NODE_ENV=test jest"
     },
     "keywords": [
-        "hackathon",
         "copilot",
         "websocket",
-        "local-first",
-        "ForTheLoveOfCode"
+        "local-first"
     ],
     "author": "KIM Team",
     "license": "MIT",
