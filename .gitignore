@@ -76,3 +76,7 @@ GITHUB_REPO_SETTINGS.md
 
 # Spec files (development planning only)
 .kiro/specs/github-video-autoplay/
+
+# Desktop files (not part of project)
+~/Desktop/
+~/
