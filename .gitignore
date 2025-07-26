@@ -59,8 +59,20 @@ temp/
 scripts/add-video.md
 scripts/convert-video.sh
 scripts/activate-video.sh
+scripts/convert-to-gif.sh
+scripts/add-screenshot.md
 
 # Documentation helper files (not part of main docs)
 docs/images/README.md
 docs/images/*.mov
 docs/images/*.avi
+docs/images/*.webm
+
+# Media conversion temporary files
+docs/images/palette.png
+
+# Repository setup files (local use only)
+GITHUB_REPO_SETTINGS.md
+
+# Spec files (development planning only)
+.kiro/specs/github-video-autoplay/
