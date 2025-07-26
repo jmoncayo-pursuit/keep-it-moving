@@ -45,6 +45,9 @@ Keep-It-Moving is a local-first system that enables developers to send prompts f
 - **Copilot integration**: Direct prompt injection via `workbench.action.chat.open`
 - **QR code generation**: Creates pairing codes with embedded URLs
 - **Status management**: Real-time connection status in status bar
+- **Control panel**: Comprehensive webview interface for server management
+
+![KIM Control Panel](docs/images/kim-control-panel.png)
 
 ## Technical Implementation
 
@@ -65,6 +68,15 @@ Intelligent port discovery system:
 - Smart fallback through multiple port ranges
 - Handles port conflicts automatically
 - Reliable startup process
+
+### Control Panel Interface
+VS Code webview-based control panel providing:
+- Real-time server status monitoring
+- One-click pairing code generation
+- Server start/stop controls
+- Auto-start configuration
+- Quick setup guide with step-by-step instructions
+- Direct PWA access with auto-pairing
 
 ### Security Implementation
 - UUID v4 tokens for authentication

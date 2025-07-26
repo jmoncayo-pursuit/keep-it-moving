@@ -6,6 +6,14 @@
 
 Keep-It-Moving (KIM) lets you send prompts to GitHub Copilot from your phone, tablet, or other devices. Install the VS Code extension, generate a pairing code, and start sending prompts remotely.
 
+## See It In Action
+
+<video width="800" autoplay muted loop playsinline>
+  <source src="docs/images/kim-demo.webm" type="video/webm">
+  <source src="docs/images/kim-demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 ## Quick Start
 
 ### 1. Install VS Code Extension
@@ -21,6 +29,12 @@ code --install-extension kim-vscode-extension-1.0.0.vsix
 
 ### 2. Generate Pairing Code
 
+**Option A: Control Panel (Recommended)**
+1. Click the KIM status indicator in VS Code status bar
+2. Click "Generate New Code" or use the displayed code
+3. Server starts automatically if not running
+
+**Option B: Command Palette**
 1. Open VS Code Command Palette (Ctrl/Cmd+Shift+P)
 2. Run: `KIM: Show Pairing Code` (auto-starts server)
 3. QR code and pairing code appear in VS Code panel
@@ -106,6 +120,19 @@ Once installed, KIM adds these commands to VS Code:
 - **KIM: Show Status** - View connection status and server info
 - **KIM: Connect to Server** - Manually connect to running server
 
+### Control Panel Interface
+
+KIM provides a comprehensive control panel accessible from the VS Code status bar. Click the KIM status indicator to open the control panel:
+
+![KIM Control Panel](docs/images/kim-control-panel.png)
+
+The control panel provides:
+- **Server Status**: Real-time server status and port information
+- **Device Pairing**: Current pairing code with one-click generation
+- **Quick Actions**: Start/stop server, generate codes, open PWA
+- **Settings**: Auto-start configuration and preferences
+- **Quick Start Guide**: Step-by-step setup instructions
+
 ### Using the Extension
 
 1. **Start the Server**: Use `KIM: Toggle Server` or check the KIM status in the status bar
@@ -163,5 +190,7 @@ MIT License
 <div align="center">
 
 **Keep-It-Moving** - Remote Copilot Prompting Made Easy 🚀
+
+#ForTheLoveOfCode
 
 </div>

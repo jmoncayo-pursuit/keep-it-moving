@@ -54,3 +54,13 @@ temp/
 
 # Kiro IDE private files and directories
 .kiro/
+
+# Local development helper scripts (keep locally, don't upload)
+scripts/add-video.md
+scripts/convert-video.sh
+scripts/activate-video.sh
+
+# Documentation helper files (not part of main docs)
+docs/images/README.md
+docs/images/*.mov
+docs/images/*.avi
