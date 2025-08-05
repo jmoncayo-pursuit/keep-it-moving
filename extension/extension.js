@@ -2,7 +2,6 @@
 // Integrates with GitHub Copilot chat for prompt injection 🚀
 
 const vscode = require('vscode');
-const path = require('path');
 const WebSocket = require('ws');
 const QRCode = require('qrcode');
 const { v4: uuidv4 } = require('uuid');
@@ -651,7 +650,7 @@ class EmbeddedKIMServer {
                     // Check for code in URL and auto-fill
                     const urlParams = new URLSearchParams(window.location.search);
                     const codeFromUrl = urlParams.get('code');
-                    if (codeFromUrl && /^\\d{6}$/.test(codeFromUrl)) {
+                    if (codeFromUrl && codeFromUrl.length === 6 && !isNaN(codeFromUrl)) {
                         document.getElementById('codeInput').value = codeFromUrl;
                         showToast('QR code detected! Code auto-filled 📱', 'success');
                         
@@ -1083,73 +1082,7 @@ function activate(context) {
     context.subscriptions.push(hoverProvider);
     context.subscriptions.push(statusBarItem);
 
-    // KIM Tree Data Provider for Explorer View
-    class KIMTreeDataProvider {
-        constructor() {
-            this._onDidChangeTreeData = new vscode.EventEmitter();
-            this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-        }
 
-        refresh() {
-            this._onDidChangeTreeData.fire();
-        }
-
-        getTreeItem(element) {
-            return element;
-        }
-
-        getChildren(element) {
-            if (!element) {
-                // Root items
-                const serverStatus = embeddedServer ? 'Running' : 'Stopped';
-                const serverIcon = embeddedServer ? '🟢' : '🔴';
-                const codeStatus = currentPairingCode ? currentPairingCode : 'None';
-
-                return [
-                    new KIMTreeItem(
-                        `${serverIcon} Server: ${serverStatus}`,
-                        embeddedServer ? 'Stop Server' : 'Start Server',
-                        'kim.toggleServer',
-                        embeddedServer ? 'stop' : 'play'
-                    ),
-                    new KIMTreeItem(
-                        `🔢 Code: ${codeStatus}`,
-                        'Generate Pairing Code',
-                        'kim.showPairingCode',
-                        'key'
-                    ),
-                    new KIMTreeItem(
-                        '🎛️ Control Panel',
-                        'Open full control panel',
-                        'kim.openPanel',
-                        'settings-gear'
-                    )
-                ];
-            }
-            return [];
-        }
-    }
-
-    class KIMTreeItem extends vscode.TreeItem {
-        constructor(label, tooltip, command, iconName) {
-            super(label, vscode.TreeItemCollapsibleState.None);
-            this.tooltip = tooltip;
-            this.command = {
-                command: command,
-                title: tooltip
-            };
-            this.iconPath = new vscode.ThemeIcon(iconName);
-        }
-    }
-
-    // Register tree data provider
-    const kimTreeProvider = new KIMTreeDataProvider();
-    vscode.window.registerTreeDataProvider('kimPanel', kimTreeProvider);
-
-    // Refresh tree when server status changes
-    function refreshKIMTree() {
-        kimTreeProvider.refresh();
-    }
 
     // Function to generate control panel HTML
     function getControlPanelHTML() {
@@ -1158,6 +1091,11 @@ function activate(context) {
         const serverStatus = embeddedServer ? 'running' : 'stopped';
         const serverPort = embeddedServer ? embeddedServer.port : config.get('serverPort', 8080);
         const currentCode = currentPairingCode || 'None';
+
+        // Get the actual server IP instead of localhost
+        const localIPs = embeddedServer ? embeddedServer.getLocalIPs() : [];
+        const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
+        const pwaUrl = `http://${serverIp}:${serverPort}?code=${currentCode}`;
 
         return `
             <!DOCTYPE html>
@@ -1282,23 +1220,10 @@ function activate(context) {
                         color: var(--vscode-textLink-foreground);
                         letter-spacing: 4px;
                     }
-                    .refresh-btn {
-                        position: absolute;
-                        top: 20px;
-                        right: 20px;
-                        background: transparent;
-                        border: 1px solid var(--vscode-panel-border);
-                        color: var(--vscode-foreground);
-                        padding: 6px 10px;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        font-size: 12px;
-                    }
+
                 </style>
             </head>
             <body>
-                <button class="refresh-btn" onclick="refreshStatus()">🔄 Refresh</button>
-                
                 <div class="header">
                     <div class="logo">🚀</div>
                     <h1 class="title">Keep-It-Moving</h1>
@@ -1337,8 +1262,26 @@ function activate(context) {
                         </div>
                     </div>
                     
+                    ${serverStatus === 'running' && currentCode !== 'None' ? `
+                    <div class="qr-section" style="background: var(--vscode-textCodeBlock-background); border: 1px solid var(--vscode-panel-border); border-radius: 6px; padding: 15px; margin: 15px 0; text-align: center;">
+                        <div id="qrcode-container" style="margin-bottom: 15px;">
+                            <div style="width: 200px; height: 200px; margin: 0 auto; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #666;">
+                                QR Code Loading...
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>📱 Mobile URL:</strong>
+                        </div>
+                        <div style="background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border); border-radius: 4px; padding: 8px; font-family: monospace; font-size: 12px; word-break: break-all; margin-bottom: 10px;" id="mobile-url">
+                            <span onclick="openPWAUrl()" style="color: var(--vscode-textLink-foreground); text-decoration: underline; cursor: pointer;" id="pwa-link">
+                                ${pwaUrl}
+                            </span>
+                        </div>
+                        <button class="button secondary" onclick="copyUrl()">📋 Copy URL</button>
+                    </div>
+                    ` : ''}
+                    
                     <button class="button" onclick="generateCode()">🔢 Generate New Code</button>
-                    <button class="button secondary" onclick="showQRCode()">📱 Show QR Code & URL</button>
                     ${serverStatus === 'running' && currentCode !== 'None' ?
                 `<button class="button secondary" onclick="openPWA()">🌐 Open PWA (Auto-Paired)</button>` :
                 ''
@@ -1384,17 +1327,64 @@ function activate(context) {
                         vscode.postMessage({ command: 'generateCode' });
                     }
 
-                    function showQRCode() {
-                        vscode.postMessage({ command: 'showQRCode' });
+                    function copyUrl() {
+                        const urlElement = document.getElementById('mobile-url');
+                        if (urlElement) {
+                            navigator.clipboard.writeText(urlElement.textContent.trim()).then(() => {
+                                vscode.postMessage({ command: 'showMessage', text: '📋 URL copied to clipboard!' });
+                            });
+                        }
                     }
+
+
+
+                    // Handle messages from the extension
+                    window.addEventListener('message', event => {
+                        const message = event.data;
+                        switch (message.command) {
+                            case 'updateQR':
+                                const qrContainer = document.getElementById('qrcode-container');
+                                const pwaLink = document.getElementById('pwa-link');
+                                
+                                if (qrContainer) {
+                                    if (message.error) {
+                                        qrContainer.innerHTML = \`
+                                            <div style="width: 200px; height: 200px; margin: 0 auto; background: #f8f8f8; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #666;">
+                                                ❌ QR Code Error
+                                            </div>
+                                        \`;
+                                    } else if (message.qrCode) {
+                                        qrContainer.innerHTML = \`
+                                            <img src="\${message.qrCode}" alt="QR Code" style="width: 200px; height: 200px; border-radius: 8px;" />
+                                        \`;
+                                        
+                                        // Update the URL link if provided
+                                        if (message.url && pwaLink) {
+                                            pwaLink.textContent = message.url;
+                                        }
+                                    }
+                                }
+                                break;
+                        }
+                    });
+
+                    // Generate QR code when page loads
+                    window.addEventListener('load', () => {
+                        const qrContainer = document.getElementById('qrcode-container');
+                        if (qrContainer) {
+                            setTimeout(() => vscode.postMessage({ command: 'generateQR' }), 100);
+                        }
+                    });
 
                     function openPWA() {
                         vscode.postMessage({ command: 'openPWA' });
                     }
 
-                    function refreshStatus() {
-                        vscode.postMessage({ command: 'refreshStatus' });
+                    function openPWAUrl() {
+                        vscode.postMessage({ command: 'openPWA' });
                     }
+
+
 
                     function updateAutoStart() {
                         const enabled = document.getElementById('autoStart').checked;
@@ -2023,11 +2013,14 @@ function activate(context) {
                         panel.webview.html = getControlPanelHTML();
                         break;
                     case 'generateCode':
-                        await vscode.commands.executeCommand('kim.showPairingCode');
-                        // Refresh panel to show new code
-                        setTimeout(() => {
-                            panel.webview.html = getControlPanelHTML();
-                        }, 500);
+                        // Generate new pairing code without opening a new panel
+                        if (embeddedServer) {
+                            const session = embeddedServer.generatePairingCode('vscode');
+                            currentPairingCode = session.code;
+                            vscode.window.showInformationMessage(`🔢 New pairing code generated: ${session.code}`);
+                        }
+                        // Refresh the control panel to show new code
+                        panel.webview.html = getControlPanelHTML();
                         break;
                     case 'showQRCode':
                         await vscode.commands.executeCommand('kim.showPairingCode');
@@ -2043,14 +2036,44 @@ function activate(context) {
                             vscode.env.openExternal(vscode.Uri.parse(pwaUrl));
                         }
                         break;
-                    case 'refreshStatus':
-                        panel.webview.html = getControlPanelHTML();
-                        break;
+
                     case 'updateAutoStart':
                         const config = vscode.workspace.getConfiguration('kim');
                         await config.update('autoStartServer', message.enabled, vscode.ConfigurationTarget.Global);
                         vscode.window.showInformationMessage(`Auto-start ${message.enabled ? 'enabled' : 'disabled'} ✅`);
                         break;
+                    case 'generateQR':
+                        if (embeddedServer && currentPairingCode) {
+                            try {
+                                const localIPs = embeddedServer.getLocalIPs();
+                                const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
+                                const pwaUrl = `http://${serverIp}:${embeddedServer.port}?code=${currentPairingCode}`;
+
+                                const qrCodeDataUrl = await QRCode.toDataURL(pwaUrl, {
+                                    width: 200,
+                                    margin: 1,
+                                    color: {
+                                        dark: '#000000',
+                                        light: '#ffffff'
+                                    }
+                                });
+
+                                // Send the QR code back to the webview
+                                panel.webview.postMessage({
+                                    command: 'updateQR',
+                                    qrCode: qrCodeDataUrl,
+                                    url: pwaUrl
+                                });
+                            } catch (error) {
+                                console.error('❌ Failed to generate QR code:', error);
+                                panel.webview.postMessage({
+                                    command: 'updateQR',
+                                    error: 'Failed to generate QR code'
+                                });
+                            }
+                        }
+                        break;
+
                 }
             },
             undefined,
@@ -2156,140 +2179,7 @@ async function createQRCodeHover(code) {
     }
 }
 
-function createManualCodeFallback(code, pwaUrl, serverIp, pwaPort) {
-    return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>KIM Pairing - Manual Mode</title>
-            <style>
-                body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-                    padding: 20px;
-                    color: #e0e0e0;
-                    background-color: #252526;
-                    text-align: center;
-                }
-                .container {
-                    max-width: 500px;
-                    margin: 0 auto;
-                }
-                h1 {
-                    font-size: 24px;
-                    margin-bottom: 20px;
-                }
-                .code {
-                    font-size: 48px;
-                    font-weight: bold;
-                    letter-spacing: 8px;
-                    margin: 30px 0;
-                    color: #3b82f6;
-                    background-color: #333;
-                    padding: 20px;
-                    border-radius: 12px;
-                    border: 2px dashed #3b82f6;
-                }
-                .button {
-                    background-color: #3b82f6;
-                    color: white;
-                    border: none;
-                    padding: 12px 24px;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 16px;
-                    margin: 10px;
-                    transition: background-color 0.2s;
-                }
-                .button:hover {
-                    background-color: #2563eb;
-                }
-                .instructions {
-                    background-color: #333;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin-top: 20px;
-                    text-align: left;
-                }
-                .url {
-                    background-color: #333;
-                    padding: 15px;
-                    border-radius: 6px;
-                    font-family: monospace;
-                    margin: 15px 0;
-                    word-break: break-all;
-                    font-size: 14px;
-                }
-                .emoji {
-                    font-size: 1.2em;
-                    margin-right: 8px;
-                }
-                .fallback-notice {
-                    background-color: #fbbf24;
-                    color: #92400e;
-                    padding: 15px;
-                    border-radius: 8px;
-                    margin-bottom: 20px;
-                    font-weight: 500;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="fallback-notice">
-                    <span class="emoji">📱</span> QR code couldn't load, but manual pairing works great!
-                </div>
-                
-                <h1><span class="emoji">🔢</span> KIM Pairing Code</h1>
-                
-                <div class="code">${code}</div>
-                
-                <button class="button" id="copyCode">
-                    <span class="emoji">📋</span> Copy Code
-                </button>
-                <button class="button" id="newCode">
-                    <span class="emoji">🔄</span> Generate New
-                </button>
-                
-                <div class="url">
-                    <strong>PWA URL:</strong><br>
-                    ${pwaUrl}
-                </div>
-                
-                <div class="instructions">
-                    <h2><span class="emoji">📱</span> How to Connect:</h2>
-                    <ol>
-                        <li>Open the PWA URL above on your device</li>
-                        <li>Switch to "Manual" mode if needed</li>
-                        <li>Enter the 6-digit code: <strong>${code}</strong></li>
-                        <li>Start sending prompts to Copilot! <span class="emoji">🎉</span></li>
-                    </ol>
-                    
-                    <p><strong>💡 Pro tip:</strong> Copy the code above and paste it directly!</p>
-                </div>
-            </div>
-            
-            <script>
-                const vscode = acquireVsCodeApi();
-                
-                document.getElementById('copyCode').addEventListener('click', () => {
-                    vscode.postMessage({
-                        command: 'copyCode',
-                        code: '${code}'
-                    });
-                });
-                
-                document.getElementById('newCode').addEventListener('click', () => {
-                    vscode.postMessage({
-                        command: 'newCode'
-                    });
-                });
-            </script>
-        </body>
-        </html>
-    `;
-}
+
 
 function deactivate() {
     console.log('👋 KIM Extension deactivated');
