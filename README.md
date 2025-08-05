@@ -16,8 +16,14 @@ Keep-It-Moving (KIM) lets you send prompts to GitHub Copilot from your phone, ta
 
 ### 1. Install VS Code Extension
 
+**Option A: VS Code Marketplace (Recommended)**
+1. Open VS Code
+2. Go to Extensions (Ctrl/Cmd+Shift+X)
+3. Search for "Keep-It-Moving" or "KIM"
+4. Click Install
+
+**Option B: Build from Source**
 ```bash
-# Build from source (marketplace version coming soon)
 git clone https://github.com/jmoncayo-pursuit/keep-it-moving.git
 cd keep-it-moving/extension
 npm install
@@ -70,10 +76,11 @@ code --install-extension kim-vscode-extension-1.0.0.vsix
 
 ## How It Works
 
-1. VS Code extension starts a local WebSocket server
-2. Extension generates a pairing code
-3. Device connects to PWA using the code
-4. Prompts sent from device appear in VS Code Copilot chat
+1. VS Code extension starts an embedded WebSocket server
+2. Extension serves a PWA directly from the extension
+3. Extension generates a pairing code and QR code
+4. Device scans QR code or visits URL to connect to PWA
+5. Prompts sent from device appear instantly in VS Code Copilot chat
 
 ## Architecture
 
@@ -113,10 +120,9 @@ This elegant solution provides:
 
 Once installed, KIM adds these commands to VS Code:
 
-- **KIM: Toggle Server** - Start/stop the local relay server
+- **KIM: Toggle Server** - Start/stop the embedded server
 - **KIM: Show Pairing Code** - Generate and display QR code for device pairing
 - **KIM: Show Status** - View connection status and server info
-- **KIM: Connect to Server** - Manually connect to running server
 
 ### Control Panel Interface
 
@@ -140,10 +146,10 @@ The control panel provides:
 
 ### Troubleshooting
 
-- **Server won't start**: Check if port 8080-8084 are available
+- **Server won't start**: Extension will automatically find an available port
 - **No pairing code**: Make sure server is running first
 - **VS Code slow**: Restart VS Code if you experience performance issues
-- **Connection issues**: Use `KIM: Connect to Server` to reconnect
+- **Connection issues**: Restart the server using `KIM: Toggle Server`
 
 ## Development
 
@@ -154,19 +160,14 @@ The control panel provides:
 ### Setup
 ```bash
 git clone https://github.com/jmoncayo-pursuit/keep-it-moving.git
-cd keep-it-moving
+cd keep-it-moving/extension
 npm install
-cd server && npm install
-cd ../pwa && npm install  
-cd ../extension && npm install
 ```
 
 ### Run Development
-```bash
-# Start server and PWA
-npm run dev
 
-# In another terminal, test the extension
+```bash
+# Start the extension in development mode (includes embedded server)
 cd extension
 code --extensionDevelopmentPath=$(pwd)
 ```
