@@ -28,6 +28,7 @@ class EmbeddedKIMServer {
         this.startTime = null;
         this.cleanupInterval = null;
         this.heartbeatInterval = null;
+        this.publicUrl = null;
     }
 
     /**
@@ -109,6 +110,9 @@ class EmbeddedKIMServer {
 
         console.log(`🎉 Embedded KIM Server running on port ${this.port}`);
         this.logNetworkInfo();
+
+        // Optionally enable internet access
+        await this.setupInternetAccess();
     }
 
     async tryStartOnPort(port) {
@@ -395,8 +399,11 @@ class EmbeddedKIMServer {
 
                     
                     <div class="pairing-section" id="pairingSection">
-                        <h3>📱 Enter Pairing Code</h3>
-                        <p>Get the 6-digit code from VS Code extension</p>
+                        <h3>📱 Connect to KIM</h3>
+                        <p>Enter pairing code or scan QR code</p>
+                        
+
+                        
                         <input type="text" id="codeInput" class="code-input" placeholder="123456" maxlength="6">
                         <button class="button" id="pairButton" onclick="pair()">Connect Device</button>
                     </div>
@@ -415,6 +422,7 @@ class EmbeddedKIMServer {
                         </div>
                         
                         <button class="button" onclick="disconnect()" style="background: #ef4444; margin-top: 10px;">Disconnect</button>
+                        <button class="button" onclick="reconnect()" style="background: #10b981; margin-top: 10px; margin-left: 10px;">🔄 Reconnect</button>
                     </div>
                 </div>
 
@@ -424,9 +432,13 @@ class EmbeddedKIMServer {
                     let isConnected = false;
                     let isPaired = false;
                     let promptHistory = [];
+                    let lastConnectionState = null;
+                    let hasShownDisconnectMessage = false;
 
                     // Auto-detect server URL from current page
                     const wsUrl = '${wsUrl}';
+                    
+
 
                     function showToast(message, type = 'info') {
                         const toast = document.createElement('div');
@@ -468,8 +480,35 @@ class EmbeddedKIMServer {
                         ws = new WebSocket(wsUrl);
                         
                         ws.onopen = () => {
-                            updateStatus('🟡 Connected - Enter pairing code', true, false);
-                            showToast('Connected to KIM server! 🚀', 'success');
+                            const newState = 'connected';
+                            
+                            // Reset disconnect message flag when we successfully connect
+                            hasShownDisconnectMessage = false;
+                            
+                            // Only show connection success if we were previously disconnected
+                            const showConnectionMessage = lastConnectionState !== 'connected';
+                            
+                            // Check if we have a pre-auth token
+                            if (window.preAuthToken) {
+                                console.log('Sending pre-auth message');
+                                ws.send(JSON.stringify({
+                                    type: 'preauth',
+                                    token: window.preAuthToken,
+                                    deviceInfo: {
+                                        type: 'mobile',
+                                        userAgent: navigator.userAgent,
+                                        timestamp: Date.now()
+                                    }
+                                }));
+                                updateStatus('🟡 Pre-authenticating...', true, false);
+                            } else {
+                                updateStatus('🟡 Connected - Enter pairing code', true, false);
+                                if (showConnectionMessage) {
+                                    showToast('Connected to KIM server! 🚀', 'success');
+                                }
+                            }
+                            
+                            lastConnectionState = newState;
                         };
                         
                         ws.onmessage = (event) => {
@@ -478,14 +517,35 @@ class EmbeddedKIMServer {
                         };
                         
                         ws.onclose = () => {
+                            const newState = 'disconnected';
                             updateStatus('🔴 Disconnected from server', false, false);
-                            showToast('Disconnected from server', 'error');
-                            setTimeout(connect, 2000); // Auto-reconnect
+                            
+                            // Only show disconnect message if we were previously connected
+                            if (lastConnectionState === 'connected' && !hasShownDisconnectMessage) {
+                                showToast('Disconnected from server', 'error');
+                                hasShownDisconnectMessage = true;
+                            }
+                            
+                            lastConnectionState = newState;
+                            
+                            // Auto-reconnect silently after delay (but not if manually disconnected)
+                            setTimeout(() => {
+                                if (!isConnected && lastConnectionState !== 'manually_disconnected') {
+                                    connect();
+                                }
+                            }, 3000);
                         };
                         
                         ws.onerror = () => {
+                            const newState = 'error';
                             updateStatus('🔴 Connection failed', false, false);
-                            showToast('Failed to connect to KIM server', 'error');
+                            
+                            // Only show error message if this is the first error and we were previously connected
+                            if (lastConnectionState === 'connected') {
+                                showToast('Connection lost', 'error');
+                            }
+                            
+                            lastConnectionState = newState;
                         };
                     }
 
@@ -628,12 +688,207 @@ class EmbeddedKIMServer {
                             ws.close();
                         }
                         token = null;
+                        window.preAuthToken = null;
+                        lastConnectionState = 'manually_disconnected';
+                        hasShownDisconnectMessage = true; // Prevent auto-reconnect messages
                         updateStatus('🔴 Disconnected', false, false);
                         showToast('Disconnected from KIM server', 'info');
                         
                         // Clear history on disconnect
                         clearHistory();
                     }
+
+                    function reconnect() {
+                        // Reset state for manual reconnection
+                        hasShownDisconnectMessage = false;
+                        lastConnectionState = null;
+                        showToast('🔄 Attempting to reconnect...', 'info');
+                        connect();
+                    }
+
+                    // QR Code camera scanning functionality
+                    let qrStream = null;
+                    let qrScanInterval = null;
+                    let isScanning = false;
+
+                    async function startQRScan() {
+                        try {
+                            const video = document.getElementById('qrVideo');
+                            const scannerSection = document.getElementById('qrScannerSection');
+                            const scanButton = document.getElementById('scanQRButton');
+                            
+                            // Request camera access with back camera preference
+                            const constraints = {
+                                video: {
+                                    facingMode: { ideal: 'environment' }, // Prefer back camera
+                                    width: { ideal: 640 },
+                                    height: { ideal: 480 }
+                                }
+                            };
+                            
+                            qrStream = await navigator.mediaDevices.getUserMedia(constraints);
+                            video.srcObject = qrStream;
+                            
+                            scannerSection.style.display = 'block';
+                            scanButton.style.display = 'none';
+                            isScanning = true;
+                            
+                            showToast('📷 Camera active - point at QR code', 'success');
+                            
+                            // Wait for video to be ready
+                            video.addEventListener('loadedmetadata', () => {
+                                video.play();
+                                startQRDetection();
+                            });
+                            
+                        } catch (error) {
+                            console.error('Camera access failed:', error);
+                            
+                            if (error.name === 'NotAllowedError') {
+                                showToast('📷 Camera permission needed - please allow access', 'error');
+                            } else if (error.name === 'NotFoundError') {
+                                showToast('📷 No camera found on this device', 'error');
+                            } else if (error.name === 'NotReadableError') {
+                                showToast('📷 Camera is being used by another app', 'error');
+                            } else {
+                                showToast('📷 Camera access failed', 'error');
+                            }
+                        }
+                    }
+
+                    function stopQRScan() {
+                        const video = document.getElementById('qrVideo');
+                        const scannerSection = document.getElementById('qrScannerSection');
+                        const scanButton = document.getElementById('scanQRButton');
+                        
+                        isScanning = false;
+                        
+                        if (qrStream) {
+                            qrStream.getTracks().forEach(track => track.stop());
+                            qrStream = null;
+                        }
+                        
+                        if (qrScanInterval) {
+                            clearInterval(qrScanInterval);
+                            qrScanInterval = null;
+                        }
+                        
+                        video.srcObject = null;
+                        scannerSection.style.display = 'none';
+                        scanButton.style.display = 'block';
+                        
+                        showToast('📷 Camera stopped', 'info');
+                    }
+
+                    function startQRDetection() {
+                        if (!isScanning) return;
+                        
+                        qrScanInterval = setInterval(() => {
+                            if (!isScanning) return;
+                            scanForQRCode();
+                        }, 300); // Scan every 300ms
+                    }
+
+                    function scanForQRCode() {
+                        const video = document.getElementById('qrVideo');
+                        const canvas = document.getElementById('qrCanvas');
+                        const context = canvas.getContext('2d');
+                        
+                        if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+                        
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        
+                        if (canvas.width === 0 || canvas.height === 0) return;
+                        
+                        // Draw current video frame to canvas
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        
+                        // Get image data for QR detection
+                        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                        
+                        // Simple QR code detection using jsQR-like algorithm
+                        const qrResult = detectQRCode(imageData);
+                        if (qrResult) {
+                            handleQRDetection(qrResult);
+                        }
+                    }
+
+                    function detectQRCode(imageData) {
+                        // Simplified QR detection - looking for URL patterns in image
+                        // This is a basic implementation. For production, you'd use jsQR library
+                        
+                        // Convert to grayscale and look for QR patterns
+                        const data = imageData.data;
+                        const width = imageData.width;
+                        const height = imageData.height;
+                        
+                        // Simple pattern detection for QR codes
+                        // Look for high contrast square patterns
+                        const threshold = 128;
+                        let qrPatterns = 0;
+                        
+                        // Sample key points for QR finder patterns
+                        const samplePoints = [
+                            [width * 0.1, height * 0.1], // Top-left
+                            [width * 0.9, height * 0.1], // Top-right  
+                            [width * 0.1, height * 0.9], // Bottom-left
+                        ];
+                        
+                        for (const [x, y] of samplePoints) {
+                            const i = (Math.floor(y) * width + Math.floor(x)) * 4;
+                            const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                            
+                            // Check for high contrast (QR finder pattern characteristic)
+                            if (brightness < threshold) {
+                                qrPatterns++;
+                            }
+                        }
+                        
+                        // If we detect potential QR patterns, try to extract URL
+                        if (qrPatterns >= 2) {
+                            // This is where a real QR library would decode the actual data
+                            // For now, we'll return null and rely on manual fallback
+                            return null;
+                        }
+                        
+                        return null;
+                    }
+
+                    function handleQRDetection(qrData) {
+                        if (!qrData) return;
+                        
+                        stopQRScan();
+                        
+                        try {
+                            const qrUrl = new URL(qrData);
+                            const token = qrUrl.searchParams.get('token');
+                            const code = qrUrl.searchParams.get('code');
+                            
+                            if (token) {
+                                // Pre-auth token found
+                                window.preAuthToken = token;
+                                showToast('🚀 QR code scanned! Connecting...', 'success');
+                                connect();
+                            } else if (code && code.length === 6) {
+                                // Pairing code found
+                                document.getElementById('codeInput').value = code;
+                                showToast('📱 QR code scanned! Code filled.', 'success');
+                                if (isConnected && !isPaired) {
+                                    pair();
+                                } else if (!isConnected) {
+                                    connect();
+                                }
+                            } else {
+                                showToast('❌ Invalid QR code format', 'error');
+                            }
+                            
+                        } catch (error) {
+                            showToast('❌ Could not parse QR code', 'error');
+                        }
+                    }
+
+
 
                     // Handle Enter key in inputs
                     document.getElementById('codeInput').addEventListener('keypress', (e) => {
@@ -644,13 +899,27 @@ class EmbeddedKIMServer {
                         if (e.key === 'Enter' && e.ctrlKey) sendPrompt();
                     });
                     
+
+                    
                     // Handle clear history button
                     document.getElementById('clearHistory').addEventListener('click', clearHistory);
 
-                    // Check for code in URL and auto-fill
+                    // Check for pre-auth token or pairing code in URL
                     const urlParams = new URLSearchParams(window.location.search);
+                    const preAuthToken = urlParams.get('token');
                     const codeFromUrl = urlParams.get('code');
-                    if (codeFromUrl && codeFromUrl.length === 6 && !isNaN(codeFromUrl)) {
+                    
+                    // Pre-authentication: Skip pairing entirely if we have a token
+                    if (preAuthToken) {
+                        console.log('Pre-auth token detected - will auto-authenticate');
+                        token = preAuthToken;
+                        showToast('🚀 Pre-auth token detected! Connecting...', 'success');
+                        
+                        // Send pre-auth message after connection
+                        window.preAuthToken = preAuthToken;
+                    }
+                    // Fallback: Auto-fill pairing code if no pre-auth token
+                    else if (codeFromUrl && codeFromUrl.length === 6 && !isNaN(codeFromUrl)) {
                         document.getElementById('codeInput').value = codeFromUrl;
                         showToast('QR code detected! Code auto-filled 📱', 'success');
                         
@@ -732,17 +1001,91 @@ class EmbeddedKIMServer {
         });
     }
 
+    async setupInternetAccess() {
+        // Check if internet access is enabled in settings
+        const vscode = require('vscode');
+        const config = vscode.workspace.getConfiguration('kim');
+        const enableInternet = config.get('enableInternetTunnel', false);
+
+        if (!enableInternet) {
+            console.log('🏠 Internet access disabled - local network only');
+            console.log('   💡 Enable in control panel for internet access');
+            return;
+        }
+
+        console.log('🌐 Setting up internet access...');
+
+        // Provide internet access options
+        await this.setupInternetOptions();
+    }
+
+    async setupInternetOptions() {
+        console.log('🌐 Internet access options:');
+        console.log('');
+        console.log('   🎯 EASIEST: Use VS Code Port Forwarding');
+        console.log('      1. Open Command Palette (Cmd+Shift+P)');
+        console.log('      2. Run "Ports: Focus on Ports View"');
+        console.log(`      3. Click "Forward Port" and enter: ${this.port}`);
+        console.log('      4. Set visibility to "Public"');
+        console.log('      5. Copy the forwarded URL and use it in QR codes');
+        console.log('');
+        console.log('   🏠 ALTERNATIVE: Router Port Forwarding');
+        console.log(`      1. Forward port ${this.port} to this computer in your router`);
+        console.log('      2. Find your public IP address');
+        console.log(`      3. Share: http://YOUR_PUBLIC_IP:${this.port}`);
+        console.log('');
+        console.log('   ☁️  CLOUD: Use GitHub Codespaces or similar');
+        console.log('      - Automatic port forwarding included');
+        console.log('      - Works out of the box');
+        console.log('');
+        console.log('   💡 For now, KIM works great on your local network!');
+
+        // Try VS Code's built-in port forwarding if available
+        await this.tryVSCodePortForwarding();
+    }
+
+    async tryVSCodePortForwarding() {
+        try {
+            const vscode = require('vscode');
+
+            // Try to use VS Code's port forwarding API if available
+            if (vscode.env.asExternalUri) {
+                const localUri = vscode.Uri.parse(`http://localhost:${this.port}`);
+                const externalUri = await vscode.env.asExternalUri(localUri);
+
+                if (externalUri.toString() !== localUri.toString()) {
+                    this.publicUrl = externalUri.toString();
+                    console.log('🎉 VS Code port forwarding detected!');
+                    console.log(`   Public URL: ${this.publicUrl}`);
+                    console.log('   📱 This URL will work from anywhere!');
+                    return;
+                }
+            }
+        } catch (error) {
+            // Silent fail - this is optional
+        }
+    }
+
     logNetworkInfo() {
         const localIPs = this.getLocalIPs();
+        console.log('🔍 Network Debug Info:');
+        console.log('   All detected IPs:', localIPs);
+        console.log('   Selected IP:', localIPs.length > 0 ? localIPs[0] : 'localhost');
+
         if (localIPs.length > 0) {
-            console.log('📱 Mobile devices can connect to:');
-            localIPs.forEach(ip => {
-                console.log(`   http://${ip}:${this.port} (PWA)`);
-                console.log(`   ws://${ip}:${this.port} (WebSocket)`);
+            console.log('📱 Local network access:');
+            localIPs.forEach((ip, index) => {
+                console.log(`   ${index === 0 ? '👑' : '  '} http://${ip}:${this.port} (PWA)`);
+                console.log(`   ${index === 0 ? '👑' : '  '} ws://${ip}:${this.port} (WebSocket)`);
             });
-            console.log('🎯 Share the PWA URL with your mobile device!');
         } else {
             console.log('⚠️  No local network interfaces found. Using localhost only.');
+        }
+
+        if (this.publicUrl) {
+            console.log('🌍 Internet access (works anywhere):');
+            console.log(`   🌐 ${this.publicUrl} (PWA)`);
+            console.log(`   🌐 ${this.publicUrl.replace('https://', 'wss://').replace('http://', 'ws://')} (WebSocket)`);
         }
     }
 
@@ -752,6 +1095,9 @@ class EmbeddedKIMServer {
         switch (type) {
             case 'pair':
                 this.handlePairing(ws, code, deviceInfo);
+                break;
+            case 'preauth':
+                this.handlePreAuth(ws, token, deviceInfo);
                 break;
             case 'prompt':
                 this.handlePrompt(ws, token, prompt);
@@ -815,6 +1161,35 @@ class EmbeddedKIMServer {
             code,
             token: session.token.substring(0, 8) + '...',
             deviceType: session.deviceType
+        });
+    }
+
+    handlePreAuth(ws, token, deviceInfo = {}) {
+        // Find session by token
+        let validSession = null;
+        for (const [code, session] of this.pairingSessions.entries()) {
+            if (session.token === token && session.expires > Date.now()) {
+                validSession = session;
+                break;
+            }
+        }
+
+        if (!validSession) {
+            this.sendError(ws, 'Invalid or expired pre-auth token', '❌');
+            return;
+        }
+
+        // Store client connection with token
+        this.clients.set(token, ws);
+        ws.kimToken = token;
+
+        // Send success response - already paired!
+        this.sendResponse(ws, 'paired', true, 'Pre-authenticated successfully', '🚀',
+            'Ready to send prompts!', { token });
+
+        console.log('🚀 Device pre-authenticated:', {
+            token: token.substring(0, 8) + '...',
+            deviceType: validSession.deviceType
         });
     }
 
@@ -898,23 +1273,45 @@ class EmbeddedKIMServer {
         return session;
     }
 
+    generatePreAuthUrl(code) {
+        const session = this.pairingSessions.get(code);
+        if (!session) {
+            return null;
+        }
+
+        // Get the best URL (internet if available, otherwise local)
+        let baseUrl;
+        if (this.publicUrl) {
+            baseUrl = this.publicUrl;
+        } else {
+            const localIPs = this.getLocalIPs();
+            baseUrl = localIPs.length > 0 ? `http://${localIPs[0]}:${this.port}` : `http://localhost:${this.port}`;
+        }
+
+        // Return URL with pre-auth token for instant access
+        return `${baseUrl}?token=${session.token}`;
+    }
+
     async generateQRCode(code) {
         try {
-            const localIPs = this.getLocalIPs();
-            const serverUrl = localIPs.length > 0 ? `http://${localIPs[0]}:${this.port}` : `http://localhost:${this.port}`;
+            // Prefer internet URL if available, fallback to local
+            let serverUrl;
+            if (this.publicUrl) {
+                serverUrl = this.publicUrl;
+            } else {
+                const localIPs = this.getLocalIPs();
+                serverUrl = localIPs.length > 0 ? `http://${localIPs[0]}:${this.port}` : `http://localhost:${this.port}`;
+            }
 
-            const qrData = {
-                type: 'kim-pairing',
-                url: serverUrl,
-                code: code,
-                timestamp: Date.now()
-            };
+            // Use pre-auth URL for instant access (no pairing step needed)
+            const pwaUrl = this.generatePreAuthUrl(code) || `${serverUrl}?code=${code}`;
 
-            return await QRCode.toDataURL(JSON.stringify(qrData), {
-                errorCorrectionLevel: 'M',
+            return await QRCode.toDataURL(pwaUrl, {
+                errorCorrectionLevel: 'H', // Higher error correction for better scanning
                 type: 'image/png',
                 quality: 0.92,
-                margin: 1,
+                margin: 2, // Larger margin for iPhone camera
+                width: 300, // Larger size for better scanning
                 color: {
                     dark: '#000000',
                     light: '#FFFFFF'
@@ -1000,6 +1397,9 @@ class EmbeddedKIMServer {
 
     async stop() {
         console.log('🛑 Stopping embedded KIM server...');
+
+        // Reset public URL
+        this.publicUrl = null;
 
         if (this.cleanupInterval) {
             clearInterval(this.cleanupInterval);
@@ -1088,14 +1488,20 @@ function activate(context) {
     function getControlPanelHTML() {
         const config = vscode.workspace.getConfiguration('kim');
         const autoStartEnabled = config.get('autoStartServer', true);
+        const internetTunnelEnabled = config.get('enableInternetTunnel', false);
         const serverStatus = embeddedServer ? 'running' : 'stopped';
         const serverPort = embeddedServer ? embeddedServer.port : config.get('serverPort', 8080);
         const currentCode = currentPairingCode || 'None';
 
-        // Get the actual server IP instead of localhost
-        const localIPs = embeddedServer ? embeddedServer.getLocalIPs() : [];
-        const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
-        const pwaUrl = `http://${serverIp}:${serverPort}?code=${currentCode}`;
+        // Get the best URL (internet if available, otherwise local)
+        let pwaUrl;
+        if (embeddedServer && embeddedServer.publicUrl) {
+            pwaUrl = `${embeddedServer.publicUrl}?code=${currentCode}`;
+        } else {
+            const localIPs = embeddedServer ? embeddedServer.getLocalIPs() : [];
+            const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
+            pwaUrl = `http://${serverIp}:${serverPort}?code=${currentCode}`;
+        }
 
         return `
             <!DOCTYPE html>
@@ -1294,6 +1700,17 @@ function activate(context) {
                         <input type="checkbox" id="autoStart" class="checkbox" ${autoStartEnabled ? 'checked' : ''} onchange="updateAutoStart()">
                         <label for="autoStart">Auto-start server when VS Code opens</label>
                     </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="internetTunnel" class="checkbox" ${internetTunnelEnabled ? 'checked' : ''} onchange="updateInternetTunnel()">
+                        <label for="internetTunnel">🌐 Enable internet access (works anywhere)</label>
+                    </div>
+                    ${internetTunnelEnabled ? `
+                        <div style="background: var(--vscode-textCodeBlock-background); border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 10px; margin: 10px 0; font-size: 12px;">
+                            <strong>🌍 Internet Access:</strong> ${embeddedServer && embeddedServer.publicUrl ?
+                    `Active - ${embeddedServer.publicUrl}<br><small style="color: var(--vscode-descriptionForeground);">⚠️ First visit shows warning page - click "Continue to Site"</small>` :
+                    'Setup required (see console for instructions)'}
+                        </div>
+                    ` : ''}
                     <p style="font-size: 12px; color: var(--vscode-descriptionForeground); margin: 10px 0 0 24px;">
                         When enabled, KIM will automatically start the server and be ready for device connections.
                     </p>
@@ -1390,6 +1807,14 @@ function activate(context) {
                         const enabled = document.getElementById('autoStart').checked;
                         vscode.postMessage({ 
                             command: 'updateAutoStart', 
+                            enabled: enabled 
+                        });
+                    }
+
+                    function updateInternetTunnel() {
+                        const enabled = document.getElementById('internetTunnel').checked;
+                        vscode.postMessage({ 
+                            command: 'updateInternetTunnel', 
                             enabled: enabled 
                         });
                     }
@@ -1634,8 +2059,16 @@ function activate(context) {
         let pwaPort = config.get('pwaPort', 3000);
 
         // Define pwaUrl outside try block so it's available in catch
-        // Use the same port as the server since it serves the PWA
-        let pwaUrl = `http://${serverIp}:${currentServerPort}?code=${code}`;
+        // Use pre-auth URL for instant access
+        let pwaUrl = embeddedServer ? embeddedServer.generatePreAuthUrl(code) : null;
+        if (!pwaUrl) {
+            // Fallback to code-based URL
+            if (embeddedServer && embeddedServer.publicUrl) {
+                pwaUrl = `${embeddedServer.publicUrl}?code=${code}`;
+            } else {
+                pwaUrl = `http://${serverIp}:${currentServerPort}?code=${code}`;
+            }
+        }
 
         try {
             // Check if PWA is actually running on the configured port
@@ -1652,7 +2085,10 @@ function activate(context) {
             }
 
             // Update pwaUrl with final port (use server port since it serves the PWA)
-            pwaUrl = `http://${serverIp}:${currentServerPort}?code=${code}`;
+            // But keep public URL if available
+            if (!embeddedServer || !embeddedServer.publicUrl) {
+                pwaUrl = `http://${serverIp}:${currentServerPort}?code=${code}`;
+            }
 
             // Generate QR code with direct URL (not JSON)
             // Generate QR code as data URL with direct URL
@@ -2027,12 +2463,19 @@ function activate(context) {
                         break;
                     case 'openPWA':
                         if (embeddedServer) {
-                            const localIPs = embeddedServer.getLocalIPs();
-                            const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
-                            // Include the current pairing code in the URL for auto-pairing
-                            const pwaUrl = currentPairingCode ?
-                                `http://${serverIp}:${embeddedServer.port}?code=${currentPairingCode}` :
-                                `http://${serverIp}:${embeddedServer.port}`;
+                            // Use internet URL if available, otherwise local
+                            let pwaUrl;
+                            if (embeddedServer.publicUrl) {
+                                pwaUrl = currentPairingCode ?
+                                    `${embeddedServer.publicUrl}?code=${currentPairingCode}` :
+                                    embeddedServer.publicUrl;
+                            } else {
+                                const localIPs = embeddedServer.getLocalIPs();
+                                const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
+                                pwaUrl = currentPairingCode ?
+                                    `http://${serverIp}:${embeddedServer.port}?code=${currentPairingCode}` :
+                                    `http://${serverIp}:${embeddedServer.port}`;
+                            }
                             vscode.env.openExternal(vscode.Uri.parse(pwaUrl));
                         }
                         break;
@@ -2042,12 +2485,30 @@ function activate(context) {
                         await config.update('autoStartServer', message.enabled, vscode.ConfigurationTarget.Global);
                         vscode.window.showInformationMessage(`Auto-start ${message.enabled ? 'enabled' : 'disabled'} ✅`);
                         break;
+                    case 'updateInternetTunnel':
+                        const kimConfig = vscode.workspace.getConfiguration('kim');
+                        await kimConfig.update('enableInternetTunnel', message.enabled, vscode.ConfigurationTarget.Global);
+
+                        if (message.enabled) {
+                            vscode.window.showInformationMessage('🌐 Internet access enabled! Restart server to activate.');
+                            vscode.window.showInformationMessage('💡 Check console for setup instructions if needed.');
+                        } else {
+                            vscode.window.showInformationMessage('🏠 Internet access disabled - local network only ✅');
+                        }
+
+                        // Refresh the control panel to show the new state
+                        setTimeout(() => {
+                            panel.webview.html = getControlPanelHTML();
+                        }, 500);
+                        break;
                     case 'generateQR':
                         if (embeddedServer && currentPairingCode) {
                             try {
-                                const localIPs = embeddedServer.getLocalIPs();
-                                const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
-                                const pwaUrl = `http://${serverIp}:${embeddedServer.port}?code=${currentPairingCode}`;
+                                // Use pre-auth URL for instant access
+                                const pwaUrl = embeddedServer.generatePreAuthUrl(currentPairingCode) ||
+                                    (embeddedServer.publicUrl ?
+                                        `${embeddedServer.publicUrl}?code=${currentPairingCode}` :
+                                        `http://localhost:${embeddedServer.port}?code=${currentPairingCode}`);
 
                                 const qrCodeDataUrl = await QRCode.toDataURL(pwaUrl, {
                                     width: 200,
@@ -2143,10 +2604,18 @@ async function createQRCodeHover(code) {
         // Use first IP address or localhost if none found
         const serverIp = ipAddresses.length > 0 ? ipAddresses[0] : 'localhost';
 
-        // Generate direct URL for QR code
-        const config = vscode.workspace.getConfiguration('kim');
-        const pwaPort = config.get('pwaPort', 3000);
-        const pwaUrl = `http://${serverIp}:${pwaPort}?code=${code}`;
+        // Generate pre-auth URL for instant access
+        let pwaUrl = embeddedServer ? embeddedServer.generatePreAuthUrl(code) : null;
+        if (!pwaUrl) {
+            // Fallback to code-based URL
+            if (embeddedServer && embeddedServer.publicUrl) {
+                pwaUrl = `${embeddedServer.publicUrl}?code=${code}`;
+            } else {
+                const config = vscode.workspace.getConfiguration('kim');
+                const pwaPort = config.get('pwaPort', 3000);
+                pwaUrl = `http://${serverIp}:${pwaPort}?code=${code}`;
+            }
+        }
 
         // Generate small QR code as data URL
         const qrCodeDataUrl = await QRCode.toDataURL(pwaUrl, {

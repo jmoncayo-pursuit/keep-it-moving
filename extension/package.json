@@ -1,7 +1,7 @@
 {
     "name": "kim-vscode-extension",
     "displayName": "Keep-It-Moving (KIM)",
-    "description": "Relay prompts from devices to GitHub Copilot chat with joyful emoji feedback",
+    "description": "Send prompts to GitHub Copilot from any device - phone, tablet, or computer. Features embedded server, QR code pairing, and instant prompt delivery.",
     "version": "1.0.0",
     "publisher": "jmoncayo-pursuit",
     "engines": {
@@ -11,14 +11,20 @@
         "chatProvider"
     ],
     "categories": [
-        "Other"
+        "Other",
+        "Extension Packs"
     ],
     "keywords": [
         "copilot",
         "remote",
         "prompts",
         "mobile",
-        "productivity"
+        "productivity",
+        "github copilot",
+        "ai",
+        "chat",
+        "qr code",
+        "websocket"
     ],
     "activationEvents": [
         "onStartupFinished"
@@ -99,13 +105,18 @@
                     "type": "number",
                     "default": 3000,
                     "description": "Port where the PWA is running (auto-detects if different)"
+                },
+                "kim.enableInternetTunnel": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable internet access for external connections (uses VS Code port forwarding)"
                 }
             }
         }
     },
     "scripts": {
         "test": "node ./test/runTest.js",
-        "package": "vsce package"
+        "package": "npx @vscode/vsce package"
     },
     "dependencies": {
         "qrcode": "^1.5.4",
@@ -116,13 +127,22 @@
         "@types/vscode": "^1.85.0",
         "@types/ws": "^8.5.10",
         "@vscode/test-electron": "^2.3.8",
+        "@vscode/vsce": "^3.6.0",
         "glob": "^10.3.10",
-        "mocha": "^10.2.0",
-        "vsce": "^2.15.0"
+        "mocha": "^10.2.0"
     },
     "repository": {
         "type": "git",
         "url": "https://github.com/jmoncayo-pursuit/keep-it-moving"
     },
-    "license": "MIT"
+    "bugs": {
+        "url": "https://github.com/jmoncayo-pursuit/keep-it-moving/issues"
+    },
+    "homepage": "https://github.com/jmoncayo-pursuit/keep-it-moving#readme",
+    "license": "MIT",
+    "icon": "icon.png",
+    "galleryBanner": {
+        "color": "#1a1a1a",
+        "theme": "dark"
+    }
 }
