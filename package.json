@@ -9,7 +9,10 @@
     "scripts": {
         "start": "node server/index.js",
         "dev": "concurrently \"npm run start\" \"npm run dev --prefix pwa\"",
+        "dev-extension": "./dev-extension.sh",
         "test": "node test-runner.js",
+        "test-extension": "node test-fresh-install.js",
+        "test-extension-bash": "./test-fresh-install.sh",
         "build": "node scripts/build.js",
         "package-extension": "node scripts/package-extension.js",
         "setup": "npm install && cd server && npm install && cd ../pwa && npm install && cd ../extension && npm install",
