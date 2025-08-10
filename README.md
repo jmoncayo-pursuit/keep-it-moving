@@ -16,20 +16,22 @@ Keep-It-Moving (KIM) lets you send prompts to GitHub Copilot from your phone, ta
 
 ### 1. Install VS Code Extension
 
-**Option A: VS Code Marketplace (Recommended)**
-1. Open VS Code
-2. Go to Extensions (Ctrl/Cmd+Shift+X)
-3. Search for "Keep-It-Moving" or "KIM"
-4. Click Install
-
-**Option B: Build from Source**
+**Option A: Build from Source (Required)**
 ```bash
 git clone https://github.com/jmoncayo-pursuit/keep-it-moving.git
 cd keep-it-moving/extension
 npm install
-npx vsce package
-code --install-extension kim-vscode-extension-1.0.0.vsix
+npm run package
+code --install-extension kim-vscode-extension-1.0.0.vsix --force
 ```
+
+**Option B: Install from VSIX File**
+If you have the `kim-vscode-extension-1.0.0.vsix` file:
+```bash
+code --install-extension kim-vscode-extension-1.0.0.vsix --force
+```
+
+> **Note**: This extension is not yet available on the VS Code Marketplace. You must build from source or install from a VSIX file.
 
 ### 2. Generate Pairing Code
 
@@ -56,10 +58,10 @@ code --install-extension kim-vscode-extension-1.0.0.vsix
 2. Enter the 6-digit pairing code
 3. Start sending prompts!
 
-## Technical Breakthroughs
-- **Embedded Server**: First-of-its-kind WebSocket server running inside VS Code extension
+## Technical Features
+- **Embedded Server**: WebSocket server running inside VS Code extension
 - **Self-Hosting PWA**: Complete web app served directly from extension (no external hosting)
-- **Dynamic Port Discovery**: Intelligent fallback system for bulletproof startup
+- **Dynamic Port Discovery**: Intelligent fallback system for reliable startup
 - **Real-Time Integration**: Direct GitHub Copilot chat injection with sub-second delivery
 
 ### 🎉 **Joyful User Experience**  
@@ -168,17 +170,49 @@ npm install
 
 ```bash
 # Start the extension in development mode (includes embedded server)
-cd extension
-code --extensionDevelopmentPath=$(pwd)
+npm run dev-extension
 ```
+
+### Test Extension
+
+Test the extension with a fresh VS Code instance:
+
+```bash
+# Cross-platform test (recommended)
+npm run test-extension
+
+# Or use bash script (macOS/Linux)
+npm run test-extension-bash
+```
+
+This will:
+1. Package the extension
+2. Create a clean VS Code profile
+3. Install the extension in the clean profile
+4. Open VS Code with the root folder
+5. Clean up the test profile when done
+
+## Response Capture Research
+
+We extensively researched capturing Copilot responses to enable bidirectional communication:
+
+**Methods Tested:**
+- ❌ **Chat Provider Hook** - VS Code Chat API not accessible
+- ❌ **Extension Hook** - Copilot extension exports not usable  
+- ❌ **Webview Interception** - Chat doesn't use interceptable webviews
+- ❌ **Command Hook** - No response data in command execution
+
+**Conclusion:** Response capture is not feasible with current VS Code/Copilot architecture. The system is designed to prevent external extensions from intercepting AI responses.
+
+**Current Status:** KIM focuses on **prompt injection** (sending prompts from mobile to Copilot), which works perfectly. Response viewing requires checking VS Code directly.
 
 ## Future Features
 
 - Voice prompts
 - Team collaboration  
 - Plugin ecosystem
-- AI integration
-- Mobile keyboard shortcuts
+- Enhanced mobile UI
+- Prompt templates
 
 ## License
 
