@@ -105,11 +105,6 @@
                     "type": "number",
                     "default": 3000,
                     "description": "Port where the PWA is running (auto-detects if different)"
-                },
-                "kim.enableInternetTunnel": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enable internet access for external connections (uses VS Code port forwarding)"
                 }
             }
         }

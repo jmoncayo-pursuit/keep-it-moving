@@ -28,7 +28,6 @@ class EmbeddedKIMServer {
         this.startTime = null;
         this.cleanupInterval = null;
         this.heartbeatInterval = null;
-        this.publicUrl = null;
     }
 
     /**
@@ -110,9 +109,6 @@ class EmbeddedKIMServer {
 
         console.log(`🎉 Embedded KIM Server running on port ${this.port}`);
         this.logNetworkInfo();
-
-        // Optionally enable internet access
-        await this.setupInternetAccess();
     }
 
     async tryStartOnPort(port) {
@@ -1001,70 +997,7 @@ class EmbeddedKIMServer {
         });
     }
 
-    async setupInternetAccess() {
-        // Check if internet access is enabled in settings
-        const vscode = require('vscode');
-        const config = vscode.workspace.getConfiguration('kim');
-        const enableInternet = config.get('enableInternetTunnel', false);
-
-        if (!enableInternet) {
-            console.log('🏠 Internet access disabled - local network only');
-            console.log('   💡 Enable in control panel for internet access');
-            return;
-        }
-
-        console.log('🌐 Setting up internet access...');
-
-        // Provide internet access options
-        await this.setupInternetOptions();
-    }
-
-    async setupInternetOptions() {
-        console.log('🌐 Internet access options:');
-        console.log('');
-        console.log('   🎯 EASIEST: Use VS Code Port Forwarding');
-        console.log('      1. Open Command Palette (Cmd+Shift+P)');
-        console.log('      2. Run "Ports: Focus on Ports View"');
-        console.log(`      3. Click "Forward Port" and enter: ${this.port}`);
-        console.log('      4. Set visibility to "Public"');
-        console.log('      5. Copy the forwarded URL and use it in QR codes');
-        console.log('');
-        console.log('   🏠 ALTERNATIVE: Router Port Forwarding');
-        console.log(`      1. Forward port ${this.port} to this computer in your router`);
-        console.log('      2. Find your public IP address');
-        console.log(`      3. Share: http://YOUR_PUBLIC_IP:${this.port}`);
-        console.log('');
-        console.log('   ☁️  CLOUD: Use GitHub Codespaces or similar');
-        console.log('      - Automatic port forwarding included');
-        console.log('      - Works out of the box');
-        console.log('');
-        console.log('   💡 For now, KIM works great on your local network!');
-
-        // Try VS Code's built-in port forwarding if available
-        await this.tryVSCodePortForwarding();
-    }
-
-    async tryVSCodePortForwarding() {
-        try {
-            const vscode = require('vscode');
-
-            // Try to use VS Code's port forwarding API if available
-            if (vscode.env.asExternalUri) {
-                const localUri = vscode.Uri.parse(`http://localhost:${this.port}`);
-                const externalUri = await vscode.env.asExternalUri(localUri);
-
-                if (externalUri.toString() !== localUri.toString()) {
-                    this.publicUrl = externalUri.toString();
-                    console.log('🎉 VS Code port forwarding detected!');
-                    console.log(`   Public URL: ${this.publicUrl}`);
-                    console.log('   📱 This URL will work from anywhere!');
-                    return;
-                }
-            }
-        } catch (error) {
-            // Silent fail - this is optional
-        }
-    }
+    
 
     logNetworkInfo() {
         const localIPs = this.getLocalIPs();
@@ -1080,12 +1013,6 @@ class EmbeddedKIMServer {
             });
         } else {
             console.log('⚠️  No local network interfaces found. Using localhost only.');
-        }
-
-        if (this.publicUrl) {
-            console.log('🌍 Internet access (works anywhere):');
-            console.log(`   🌐 ${this.publicUrl} (PWA)`);
-            console.log(`   🌐 ${this.publicUrl.replace('https://', 'wss://').replace('http://', 'ws://')} (WebSocket)`);
         }
     }
 
@@ -1279,14 +1206,9 @@ class EmbeddedKIMServer {
             return null;
         }
 
-        // Get the best URL (internet if available, otherwise local)
-        let baseUrl;
-        if (this.publicUrl) {
-            baseUrl = this.publicUrl;
-        } else {
-            const localIPs = this.getLocalIPs();
-            baseUrl = localIPs.length > 0 ? `http://${localIPs[0]}:${this.port}` : `http://localhost:${this.port}`;
-        }
+        // Get local URL
+        const localIPs = this.getLocalIPs();
+        const baseUrl = localIPs.length > 0 ? `http://${localIPs[0]}:${this.port}` : `http://localhost:${this.port}`;
 
         // Return URL with pre-auth token for instant access
         return `${baseUrl}?token=${session.token}`;
@@ -1294,14 +1216,9 @@ class EmbeddedKIMServer {
 
     async generateQRCode(code) {
         try {
-            // Prefer internet URL if available, fallback to local
-            let serverUrl;
-            if (this.publicUrl) {
-                serverUrl = this.publicUrl;
-            } else {
-                const localIPs = this.getLocalIPs();
-                serverUrl = localIPs.length > 0 ? `http://${localIPs[0]}:${this.port}` : `http://localhost:${this.port}`;
-            }
+            // Use local URL
+            const localIPs = this.getLocalIPs();
+            const serverUrl = localIPs.length > 0 ? `http://${localIPs[0]}:${this.port}` : `http://localhost:${this.port}`;
 
             // Use pre-auth URL for instant access (no pairing step needed)
             const pwaUrl = this.generatePreAuthUrl(code) || `${serverUrl}?code=${code}`;
@@ -1398,8 +1315,7 @@ class EmbeddedKIMServer {
     async stop() {
         console.log('🛑 Stopping embedded KIM server...');
 
-        // Reset public URL
-        this.publicUrl = null;
+        // Reset timers
 
         if (this.cleanupInterval) {
             clearInterval(this.cleanupInterval);
@@ -1488,20 +1404,15 @@ function activate(context) {
     function getControlPanelHTML() {
         const config = vscode.workspace.getConfiguration('kim');
         const autoStartEnabled = config.get('autoStartServer', true);
-        const internetTunnelEnabled = config.get('enableInternetTunnel', false);
         const serverStatus = embeddedServer ? 'running' : 'stopped';
         const serverPort = embeddedServer ? embeddedServer.port : config.get('serverPort', 8080);
         const currentCode = currentPairingCode || 'None';
 
-        // Get the best URL (internet if available, otherwise local)
+        // Compute local URL
         let pwaUrl;
-        if (embeddedServer && embeddedServer.publicUrl) {
-            pwaUrl = `${embeddedServer.publicUrl}?code=${currentCode}`;
-        } else {
-            const localIPs = embeddedServer ? embeddedServer.getLocalIPs() : [];
-            const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
-            pwaUrl = `http://${serverIp}:${serverPort}?code=${currentCode}`;
-        }
+        const localIPs = embeddedServer ? embeddedServer.getLocalIPs() : [];
+        const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
+        pwaUrl = `http://${serverIp}:${serverPort}?code=${currentCode}`;
 
         return `
             <!DOCTYPE html>
@@ -1700,17 +1611,7 @@ function activate(context) {
                         <input type="checkbox" id="autoStart" class="checkbox" ${autoStartEnabled ? 'checked' : ''} onchange="updateAutoStart()">
                         <label for="autoStart">Auto-start server when VS Code opens</label>
                     </div>
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="internetTunnel" class="checkbox" ${internetTunnelEnabled ? 'checked' : ''} onchange="updateInternetTunnel()">
-                        <label for="internetTunnel">🌐 Enable internet access (works anywhere)</label>
-                    </div>
-                    ${internetTunnelEnabled ? `
-                        <div style="background: var(--vscode-textCodeBlock-background); border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 10px; margin: 10px 0; font-size: 12px;">
-                            <strong>🌍 Internet Access:</strong> ${embeddedServer && embeddedServer.publicUrl ?
-                    `Active - ${embeddedServer.publicUrl}<br><small style="color: var(--vscode-descriptionForeground);">⚠️ First visit shows warning page - click "Continue to Site"</small>` :
-                    'Setup required (see console for instructions)'}
-                        </div>
-                    ` : ''}
+                    
                     <p style="font-size: 12px; color: var(--vscode-descriptionForeground); margin: 10px 0 0 24px;">
                         When enabled, KIM will automatically start the server and be ready for device connections.
                     </p>
@@ -1811,13 +1712,7 @@ function activate(context) {
                         });
                     }
 
-                    function updateInternetTunnel() {
-                        const enabled = document.getElementById('internetTunnel').checked;
-                        vscode.postMessage({ 
-                            command: 'updateInternetTunnel', 
-                            enabled: enabled 
-                        });
-                    }
+                    
                 </script>
             </body>
             </html>
@@ -2062,12 +1957,8 @@ function activate(context) {
         // Use pre-auth URL for instant access
         let pwaUrl = embeddedServer ? embeddedServer.generatePreAuthUrl(code) : null;
         if (!pwaUrl) {
-            // Fallback to code-based URL
-            if (embeddedServer && embeddedServer.publicUrl) {
-                pwaUrl = `${embeddedServer.publicUrl}?code=${code}`;
-            } else {
-                pwaUrl = `http://${serverIp}:${currentServerPort}?code=${code}`;
-            }
+            // Fallback to code-based URL (local only)
+            pwaUrl = `http://${serverIp}:${currentServerPort}?code=${code}`;
         }
 
         try {
@@ -2085,10 +1976,7 @@ function activate(context) {
             }
 
             // Update pwaUrl with final port (use server port since it serves the PWA)
-            // But keep public URL if available
-            if (!embeddedServer || !embeddedServer.publicUrl) {
-                pwaUrl = `http://${serverIp}:${currentServerPort}?code=${code}`;
-            }
+            pwaUrl = `http://${serverIp}:${currentServerPort}?code=${code}`;
 
             // Generate QR code with direct URL (not JSON)
             // Generate QR code as data URL with direct URL
@@ -2463,19 +2351,11 @@ function activate(context) {
                         break;
                     case 'openPWA':
                         if (embeddedServer) {
-                            // Use internet URL if available, otherwise local
-                            let pwaUrl;
-                            if (embeddedServer.publicUrl) {
-                                pwaUrl = currentPairingCode ?
-                                    `${embeddedServer.publicUrl}?code=${currentPairingCode}` :
-                                    embeddedServer.publicUrl;
-                            } else {
-                                const localIPs = embeddedServer.getLocalIPs();
-                                const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
-                                pwaUrl = currentPairingCode ?
-                                    `http://${serverIp}:${embeddedServer.port}?code=${currentPairingCode}` :
-                                    `http://${serverIp}:${embeddedServer.port}`;
-                            }
+                            const localIPs = embeddedServer.getLocalIPs();
+                            const serverIp = localIPs.length > 0 ? localIPs[0] : 'localhost';
+                            const pwaUrl = currentPairingCode ?
+                                `http://${serverIp}:${embeddedServer.port}?code=${currentPairingCode}` :
+                                `http://${serverIp}:${embeddedServer.port}`;
                             vscode.env.openExternal(vscode.Uri.parse(pwaUrl));
                         }
                         break;
@@ -2485,30 +2365,13 @@ function activate(context) {
                         await config.update('autoStartServer', message.enabled, vscode.ConfigurationTarget.Global);
                         vscode.window.showInformationMessage(`Auto-start ${message.enabled ? 'enabled' : 'disabled'} ✅`);
                         break;
-                    case 'updateInternetTunnel':
-                        const kimConfig = vscode.workspace.getConfiguration('kim');
-                        await kimConfig.update('enableInternetTunnel', message.enabled, vscode.ConfigurationTarget.Global);
-
-                        if (message.enabled) {
-                            vscode.window.showInformationMessage('🌐 Internet access enabled! Restart server to activate.');
-                            vscode.window.showInformationMessage('💡 Check console for setup instructions if needed.');
-                        } else {
-                            vscode.window.showInformationMessage('🏠 Internet access disabled - local network only ✅');
-                        }
-
-                        // Refresh the control panel to show the new state
-                        setTimeout(() => {
-                            panel.webview.html = getControlPanelHTML();
-                        }, 500);
-                        break;
+                    // Internet access toggle removed; no-op preserved for backward compatibility
                     case 'generateQR':
                         if (embeddedServer && currentPairingCode) {
                             try {
                                 // Use pre-auth URL for instant access
                                 const pwaUrl = embeddedServer.generatePreAuthUrl(currentPairingCode) ||
-                                    (embeddedServer.publicUrl ?
-                                        `${embeddedServer.publicUrl}?code=${currentPairingCode}` :
-                                        `http://localhost:${embeddedServer.port}?code=${currentPairingCode}`);
+                                    `http://localhost:${embeddedServer.port}?code=${currentPairingCode}`;
 
                                 const qrCodeDataUrl = await QRCode.toDataURL(pwaUrl, {
                                     width: 200,
@@ -2607,14 +2470,9 @@ async function createQRCodeHover(code) {
         // Generate pre-auth URL for instant access
         let pwaUrl = embeddedServer ? embeddedServer.generatePreAuthUrl(code) : null;
         if (!pwaUrl) {
-            // Fallback to code-based URL
-            if (embeddedServer && embeddedServer.publicUrl) {
-                pwaUrl = `${embeddedServer.publicUrl}?code=${code}`;
-            } else {
-                const config = vscode.workspace.getConfiguration('kim');
-                const pwaPort = config.get('pwaPort', 3000);
-                pwaUrl = `http://${serverIp}:${pwaPort}?code=${code}`;
-            }
+            const config = vscode.workspace.getConfiguration('kim');
+            const pwaPort = config.get('pwaPort', 3000);
+            pwaUrl = `http://${serverIp}:${pwaPort}?code=${code}`;
         }
 
         // Generate small QR code as data URL
