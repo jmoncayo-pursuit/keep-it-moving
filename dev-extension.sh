@@ -10,6 +10,13 @@ echo "🔧 Running from source code (no packaging needed)"
 echo ""
 
 cd extension
+
+# Ensure extension dependencies are installed (ws, qrcode, uuid, etc.)
+if ! npm ls ws qrcode uuid --depth=0 >/dev/null 2>&1; then
+  echo "📦 Installing extension dependencies..."
+  npm ci --silent || npm install --silent
+fi
+
 code --extensionDevelopmentPath=$(pwd) --new-window ../
 
 echo "✅ VS Code opened with KIM extension in development mode"
