@@ -10,7 +10,7 @@ Keep-It-Moving (KIM) lets you send prompts to GitHub Copilot from your phone, ta
 
 ![KIM Demo - Complete workflow from VS Code extension to mobile prompting](docs/images/kim-demo.gif)
 
-*24-second demo showing the complete KIM workflow: VS Code extension → QR code pairing → mobile prompting → Copilot integration*
+*Demo showing the complete KIM workflow: VS Code extension → QR code pairing → mobile prompting → Copilot integration*
 
 ## Quick Start
 
