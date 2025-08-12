@@ -173,25 +173,6 @@ npm install
 npm run dev-extension
 ```
 
-### Test Extension
-
-Test the extension with a fresh VS Code instance:
-
-```bash
-# Cross-platform test (recommended)
-npm run test-extension
-
-# Or use bash script (macOS/Linux)
-npm run test-extension-bash
-```
-
-This will:
-1. Package the extension
-2. Create a clean VS Code profile
-3. Install the extension in the clean profile
-4. Open VS Code with the root folder
-5. Clean up the test profile when done
-
 ## Response Capture Research
 
 We extensively researched capturing Copilot responses to enable bidirectional communication:
